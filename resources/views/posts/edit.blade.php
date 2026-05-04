@@ -230,33 +230,13 @@
                 </div>
                 @endif
 
-                {{-- Upload Gambar --}}
-                <div x-data="imageUploader()">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Dokumentasi Karya (Screenshoot, Foto Kreator, dll) <span class="text-red-500">*</span>
-                        <span class="text-xs text-gray-400 font-normal ml-1">(Maksimal 5 gambar)</span>
+                {{-- Upload Gdrive URL --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Link Dokumen / Gambar Karya (Google Drive) 
                     </label>
-
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl bg-gray-50 hover:bg-blue-50 transition relative group cursor-pointer"
-                         @click="document.getElementById('imgInput').click()">
-                        <div class="space-y-1 text-center">
-                            <div class="mx-auto h-12 w-12 text-gray-400 group-hover:text-blue-500 transition">📸</div>
-                            <div class="text-sm text-gray-600">
-                                <span class="font-medium text-blue-600 hover:text-blue-500">Klik untuk upload</span>
-                            </div>
-                            <p class="text-xs text-gray-500">PNG, JPG, WebP (Max 5 File)</p>
-                        </div>
-                        <input id="imgInput" type="file" name="post_images[]" multiple accept="image/png,image/jpeg,image/webp" class="hidden" @change="handleImages">
-                    </div>
-
-                    <div x-show="images.length > 0" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4" style="display: none;">
-                        <template x-for="(img, index) in images" :key="index">
-                            <div class="relative">
-                                <img :src="img.url" class="w-full h-24 object-cover rounded-lg border border-gray-200">
-                                <button type="button" @click="removeImage(index)" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 text-xs flex items-center justify-center shadow">×</button>
-                            </div>
-                        </template>
-                    </div>
+                    <input type="url" name="gdrive_url" value="{{ old('gdrive_url', $post['gdrive_url'] ?? '') }}" placeholder="https://drive.google.com/..." class="w-full border-gray-300 rounded-xl px-4 py-3 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">Pastikan akses link diubah ke "Anyone with the link"</p>
                 </div>
 
                 {{-- Upload PDF HKI --}}
@@ -309,28 +289,6 @@
 </div>
 
 <script>
-    function imageUploader() {
-        return {
-            images: [],
-            handleImages(e) {
-                const selected = Array.from(e.target.files);
-                for (const file of selected) {
-                    if (this.images.length >= 5) break;
-                    this.images.push({ file, url: URL.createObjectURL(file) });
-                }
-                this.updateInput();
-            },
-            removeImage(index) {
-                this.images.splice(index, 1);
-                this.updateInput();
-            },
-            updateInput() {
-                const dt = new DataTransfer();
-                this.images.forEach(img => dt.items.add(img.file));
-                document.getElementById('imgInput').files = dt.files;
-            }
-        }
-    }
 
     function docUploader() {
         return {

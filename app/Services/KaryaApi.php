@@ -129,9 +129,9 @@ class KaryaApi
     /**
      * Mengambil feed khusus user yang di-follow (Dashboard)
      */
-    public function getFollowingPosts()
+    public function getFollowingPosts($params = [])
     {
-        return $this->getClient()->get("{$this->baseUrl}/posts/following");
+        return $this->getClient()->get("{$this->baseUrl}/posts/following", $params);
     }
 
     /**
@@ -164,9 +164,12 @@ class KaryaApi
     /**
      * Mengambil Karya Populer (Home Page)
      */
-    public function getPopularPosts($limit = 6)
+    public function getPopularPosts($limit = 6, $page = 1)
     {
-        return $this->getPublicClient()->get("{$this->baseUrl}/posts/popular", ['limit' => $limit]);
+        return $this->getPublicClient()->get("{$this->baseUrl}/posts/popular", [
+            'limit' => $limit,
+            'page' => $page
+        ]);
     }
 
     /**
@@ -228,7 +231,7 @@ class KaryaApi
      * Endpoint: GET /api/posts/admin/all
      * Authentication: Required (Admin/Superadmin/Verifikator)
      */
-    public function getAllPosts($isPublished = null)
+    public function getAllPosts($params = [])
     {
         $token = Session::get('api_token');
         
@@ -237,27 +240,25 @@ class KaryaApi
             throw new \Exception('Token tidak ditemukan. Silakan login ulang.');
         }
         
-        $params = [];
-        if ($isPublished !== null) {
-            $params['is_published'] = $isPublished;
-        }
-        
         Log::info('getAllPosts: Sending request', [
             'endpoint' => "{$this->baseUrl}/posts/admin/all",
             'has_token' => !empty($token),
-            'token_length' => strlen($token),
             'params' => $params
         ]);
         
-        // Send request with explicit Authorization header
         return $this->getClient()->get("{$this->baseUrl}/posts/admin/all", $params);
     }
 
     // --- USERS ---
 
-    public function getAllUsers($token = null)
+    public function getAllUsers($params = [], $token = null)
     {
-        return $this->getClientWithToken($token)->get("{$this->baseUrl}/v1/users");
+        return $this->getClientWithToken($token)->get("{$this->baseUrl}/v1/users", $params);
+    }
+
+    public function searchUsers($params = [])
+    {
+        return $this->getPublicClient()->get("{$this->baseUrl}/v1/users/search", $params);
     }
 
     /**
@@ -411,9 +412,9 @@ class KaryaApi
 
     // --- PROGRAM STUDI ---
 
-    public function getAllProgramStudi()
+    public function getAllProgramStudi($params = [])
     {
-        return $this->getPublicClient()->get("{$this->baseUrl}/program-studi");
+        return $this->getPublicClient()->get("{$this->baseUrl}/program-studi", $params);
     }
 
     public function getProgramStudiById($id)

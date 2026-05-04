@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // Apply refresh token middleware globally untuk semua routes
         $middleware->append(\App\Http\Middleware\RefreshTokenMiddleware::class);
+        $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

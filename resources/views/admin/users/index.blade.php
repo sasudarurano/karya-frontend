@@ -15,6 +15,29 @@
             </a>
         </div>
 
+        {{-- Search Bar --}}
+        <div class="mb-8">
+            <form action="{{ route('admin.users.index') }}" method="GET" class="relative max-w-md w-full">
+                <input type="text" 
+                       name="search" 
+                       value="{{ $search ?? '' }}" 
+                       placeholder="Cari nama, email, atau username..." 
+                       class="w-full pl-10 pr-10 py-3 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition shadow-sm font-medium text-slate-700">
+                <div class="absolute left-4 top-3.5 text-slate-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                </div>
+                @if($search)
+                <a href="{{ route('admin.users.index') }}" class="absolute right-4 top-3.5 text-slate-400 hover:text-slate-600 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </a>
+                @endif
+            </form>
+        </div>
+
         {{-- Modal Component --}}
         <div id="notificationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4" onclick="if(event.target === this) closeModal()">
             <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all" onclick="event.stopPropagation()">
@@ -120,9 +143,25 @@
                 <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
-                <h3 class="text-xl font-bold text-slate-800">Database Kosong</h3>
-                <p class="text-slate-500 mt-2 mb-8">Belum ada data pengguna yang terdaftar dalam sistem.</p>
-                <a href="{{ route('admin.users.create') }}" class="text-blue-600 font-bold hover:underline">Buat user pertama →</a>
+                <h3 class="text-xl font-bold text-slate-800">
+                    @if($search)
+                        Hasil tidak ditemukan
+                    @else
+                        Database Kosong
+                    @endif
+                </h3>
+                <p class="text-slate-500 mt-2 mb-8">
+                    @if($search)
+                        Tidak ada pengguna yang cocok dengan kata kunci "{{ $search }}"
+                    @else
+                        Belum ada data pengguna yang terdaftar dalam sistem.
+                    @endif
+                </p>
+                @if($search)
+                    <a href="{{ route('admin.users.index') }}" class="text-blue-600 font-bold hover:underline">Reset Pencarian</a>
+                @else
+                    <a href="{{ route('admin.users.create') }}" class="text-blue-600 font-bold hover:underline">Buat user pertama →</a>
+                @endif
             </div>
         @else
             <div class="bg-white rounded-[1.5rem] shadow-sm border border-slate-200 overflow-hidden">
@@ -249,8 +288,32 @@
                     </table>
                 </div>
                 
-                <div class="bg-slate-50/50 px-6 py-4 border-t border-slate-100 text-xs text-slate-400 font-medium">
-                    Menampilkan {{ count($users) }} total pengguna dalam sistem.
+                <div class="bg-slate-50/50 px-6 py-4 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p class="text-xs text-slate-400 font-medium">
+                        Menampilkan <span class="font-bold text-slate-600">{{ count($users) }}</span> dari <span class="font-bold text-slate-600">{{ $meta['total'] ?? count($users) }}</span> pengguna.
+                    </p>
+                    
+                    @if(isset($meta) && isset($meta['last_page']) && $meta['last_page'] > 1)
+                    <div class="flex items-center gap-2">
+                        @if($meta['page'] > 1)
+                        <a href="{{ route('admin.users.index', array_merge(request()->query(), ['page' => $meta['page'] - 1])) }}" 
+                           class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-sm">
+                            Sebelumnya
+                        </a>
+                        @endif
+
+                        <span class="text-xs font-bold text-slate-500 px-2">
+                            {{ $meta['page'] }} / {{ $meta['last_page'] }}
+                        </span>
+
+                        @if($meta['page'] < $meta['last_page'])
+                        <a href="{{ route('admin.users.index', array_merge(request()->query(), ['page' => $meta['page'] + 1])) }}" 
+                           class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-sm">
+                            Selanjutnya
+                        </a>
+                        @endif
+                    </div>
+                    @endif
                 </div>
             </div>
         @endif

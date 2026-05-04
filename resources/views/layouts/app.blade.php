@@ -8,7 +8,7 @@
     <meta name="api-token" content="{{ Session::get('api_token', '') }}">
     <title>Karya Mahasiswa</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     
     {{-- Global Like Manager for bookmark functionality --}}
     <script>
@@ -56,7 +56,7 @@
                                 <span x-show="unreadCount > 0" class="absolute top-1 right-1 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full" x-text="unreadCount"></span>
                             </button>
                             
-                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl py-2 ring-1 ring-black/5 z-50 max-h-96 overflow-y-auto" style="display: none;">
+                            <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl py-2 ring-1 ring-black/5 z-50 max-h-96 overflow-y-auto" style="display: none;">
                                 <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
                                     <h3 class="font-semibold text-gray-900 text-sm">Notifikasi</h3>
                                     <a href="{{ route('notifications.index') }}" class="text-xs text-blue-600 hover:underline font-medium">Lihat Semua</a>
@@ -82,7 +82,7 @@
                                     <img src="https://ui-avatars.com/api/?name={{ Session::get('user')['username'] }}&background=random" class="h-8 w-8 rounded-full border-2 border-gray-200" alt="Avatar">
                                 @endif
                             </button>
-                            <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 ring-1 ring-black/5 z-50" style="display: none;">
+                            <div x-show="open" @click.outside="open = false" class="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl py-2 ring-1 ring-black/5 z-50" style="display: none;">
                                 <div class="px-4 py-2 border-b border-gray-100">
                                     <p class="font-semibold text-gray-900 text-sm">{{ Session::get('user')['full_name'] ?? 'User' }}</p>
                                     <p class="text-xs text-gray-500">{{ '@' . (Session::get('user')['username'] ?? 'user') }}</p>
@@ -248,11 +248,13 @@
                 
                 // Update Alpine state (if available)
                 const button = document.querySelector('[x-data*="unreadCount"]');
-                if (button && window.Alpine && button.__x) {
-                    const alpineData = button.__x.$data;
-                    if (alpineData) {
-                        alpineData.unreadCount = count;
-                    }
+                if (button && window.Alpine) {
+                    try {
+                        const alpineData = Alpine.$data(button);
+                        if (alpineData) {
+                            alpineData.unreadCount = count;
+                        }
+                    } catch(e) {}
                 }
                 
                 // Also update the badge number directly

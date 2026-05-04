@@ -138,8 +138,10 @@ Route::middleware(['session.auth'])->group(function () {
     // Profile
     Route::get('/profile/edit', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::get('/profile/{userId}', [ProfileController::class, 'show'])->name('profile.show');
 });
+
+// Profile Publik
+Route::get('/profile/{userId}', [ProfileController::class, 'show'])->name('profile.show');
 
 
 /*

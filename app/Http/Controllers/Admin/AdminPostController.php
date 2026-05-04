@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Services\KaryaApi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class AdminPostController extends Controller
 {
@@ -32,92 +33,58 @@ class AdminPostController extends Controller
         $availableProdis = [];
 
         // Filters
-        $searchQuery   = trim($request->query('search', ''));
+        $searchQuery    = trim($request->query('search', ''));
         $filterCategory = $request->query('category');
         $filterProdi    = $request->query('prodi');
+        $page           = $request->query('page', 1);
+        $limit          = 10;
 
-        // Debug: Cek token dan user role
-        Log::info('Admin Posts Index - Debug Info:', [
-            'has_token' => !empty(session('api_token')),
-            'token_preview' => session('api_token') ? substr(session('api_token'), 0, 20) . '...' : 'NO TOKEN',
-            'user_role' => session('user.role'),
-            'user_id' => session('user.id'),
-        ]);
+        // Ambil data dari backend dengan filter dan pagination
+        $params = [
+            'search'   => $searchQuery,
+            'category' => $filterCategory,
+            'prodi'    => $filterProdi,
+            'page'     => $page,
+            'limit'    => $limit
+        ];
 
-        // Ambil semua karya (published dan unpublished)
-        $response = $this->api->getAllPosts();
-
-        // Debug: Log response
-        Log::info('Admin Posts Index - API Response:', [
-            'status_code' => $response->status(),
-            'successful' => $response->successful(),
-            'has_data' => isset($response->json()['data']),
-            'data_count' => isset($response->json()['data']) ? count($response->json()['data']) : 0,
-        ]);
+        $response = $this->api->getAllPosts($params);
 
         if ($response->successful()) {
             $responseData = $response->json();
             
             // Backend returns nested structure: {success, data: {data: [], meta: {}}}
-            // Check if response has success flag and nested data
             if (isset($responseData['success']) && $responseData['success'] && isset($responseData['data'])) {
-                $allPosts = $responseData['data']['data'] ?? [];
+                $posts = $responseData['data']['data'] ?? [];
                 $meta = $responseData['data']['meta'] ?? [];
             } else {
-                // Fallback: old structure or direct data array
-                $allPosts = $responseData['data'] ?? [];
+                // Fallback
+                $posts = $responseData['data'] ?? [];
                 $meta = [];
             }
 
-            // Enrich dengan daftar prodi (author + contributors)
-            $allPosts = collect($allPosts)->map(function ($post) {
-                $programStudiList = [];
-
-                $authorProdi = $post['author']['profile']['program_studi']['nama_program_studi'] ?? null;
-                if ($authorProdi) {
-                    $programStudiList[] = $authorProdi;
-                }
-
-                if (!empty($post['contributors']) && is_array($post['contributors'])) {
-                    foreach ($post['contributors'] as $contrib) {
-                        $contribProdi = $contrib['profile']['program_studi']['nama_program_studi'] ?? null;
-                        if ($contribProdi) {
-                            $programStudiList[] = $contribProdi;
-                        }
-                    }
-                }
-
-                // Unique & reindex
-                $programStudiList = array_values(array_unique($programStudiList));
-
-                $post['program_studi_list'] = $programStudiList;
-                $post['program_studi_display'] = !empty($programStudiList)
-                    ? implode(', ', $programStudiList)
-                    : '-';
-
+            // Enrich dengan daftar prodi display (sekadar untuk tampilan tabel jika dibutuhkan)
+            $posts = collect($posts)->map(function ($post) {
+                $prodi = $post['author']['profile']['program_studi']['nama_program_studi'] ?? '-';
+                $post['program_studi_display'] = $prodi;
                 return $post;
-            });
+            })->toArray();
 
-            // Kumpulan opsi filter
-            $availableCategories = $allPosts->pluck('category')->filter()->unique()->values()->all();
-            $availableProdis = $allPosts->pluck('program_studi_list')
-                ->flatten()
-                ->filter()
-                ->unique()
-                ->values()
-                ->all();
-
-            // Ambil master prodi dari backend agar opsi selalu lengkap
+            // Hitung statistik dari meta (backend mengirim global stats dalam meta)
+            $total     = $meta['global_total'] ?? ($meta['total'] ?? count($posts));
+            $published = $meta['published'] ?? 0;
+            $pending   = $meta['unpublished'] ?? 0;
+            
+            // Opsi filter (untuk dropdown)
+            // Kategori: bisa kita hardcode atau ambil dari spesifik API categories jika ada.
+            // Di sini kita tetap butuh list Prodi lengkap untuk dropdown.
             try {
                 $prodiResp = $this->api->getProgramStudis();
                 if ($prodiResp->successful()) {
                     $prodiData = $prodiResp->json()['data'] ?? [];
-                    $masterProdis = collect($prodiData)
+                    $availableProdis = collect($prodiData)
                         ->pluck('nama_program_studi')
                         ->filter()
-                        ->values();
-                    $availableProdis = collect($availableProdis)
-                        ->merge($masterProdis)
                         ->unique()
                         ->values()
                         ->all();
@@ -126,47 +93,9 @@ class AdminPostController extends Controller
                 Log::warning('Failed fetching program studi list', ['error' => $e->getMessage()]);
             }
 
-            // Terapkan filter pencarian/kategori/prodi
-            $filteredPosts = $allPosts->filter(function ($post) use ($searchQuery, $filterCategory, $filterProdi) {
-                $passesSearch = true;
-                if ($searchQuery !== '') {
-                    $passesSearch = str_contains(strtolower($post['title'] ?? ''), strtolower($searchQuery))
-                        || str_contains(strtolower($post['author']['full_name'] ?? ''), strtolower($searchQuery))
-                        || str_contains(strtolower($post['author']['username'] ?? ''), strtolower($searchQuery));
-                }
-
-                $passesCategory = $filterCategory ? (($post['category'] ?? null) === $filterCategory) : true;
-
-                $passesProdi = true;
-                if ($filterProdi) {
-                    $prodiList = $post['program_studi_list'] ?? [];
-                    $passesProdi = in_array($filterProdi, $prodiList);
-                }
-
-                return $passesSearch && $passesCategory && $passesProdi;
-            });
-            
-            // Log untuk debugging
-            Log::info('Admin getAllPosts response:', [
-                'response_has_success' => isset($responseData['success']),
-                'response_structure' => array_keys($responseData),
-                'nested_data_keys' => isset($responseData['data']) ? array_keys($responseData['data']) : 'NO DATA KEY',
-                'total_posts' => $allPosts->count(),
-                'first_post_keys' => ($allPosts->isNotEmpty() && isset($allPosts[0]) && is_array($allPosts[0])) ? array_keys($allPosts[0]) : [],
-                'first_post_sample' => ($allPosts->isNotEmpty() && isset($allPosts[0])) ? json_encode($allPosts[0]) : 'NO DATA',
-                'unpublished_count' => $allPosts->where('is_published', false)->count(),
-                'meta_from_backend' => $meta,
-            ]);
-            
-            // Hitung statistik dari meta atau dari data
-            $total = $meta['total'] ?? count($allPosts);
-            $published = $meta['published'] ?? $filteredPosts->where('is_published', true)->count();
-            $pending = $meta['unpublished'] ?? ($total - $published);
-            
-            // Filter untuk menampilkan yang belum dipublikasikan terlebih dahulu
-            $posts = $filteredPosts->sortBy(function ($post) {
-                return ($post['is_published'] ?? false) ? 1 : 0;
-            })->values()->toArray();
+            // List kategori (bisa ambil dari konstanta atau API lain, di sini kita ambil dari data yang ada di DB secara global jika mungkin, 
+            // tapi sementara kita gunakan list statis atau biarkan kosong jika API categories belum ada)
+            $availableCategories = ['PKM', 'Karya Tulis', 'Project Mandiri', 'Lainnya']; 
         } else {
             Log::error('Failed to fetch all posts for admin', [
                 'status' => $response->status(),
@@ -246,6 +175,7 @@ class AdminPostController extends Controller
         $response = $this->api->togglePublish($id);
 
         if ($response->successful()) {
+            Cache::forget('home_data_v2');
             return back()->with('success', 'Status publikasi berhasil diubah.');
         }
 
@@ -275,6 +205,7 @@ class AdminPostController extends Controller
         ]);
 
         if ($response->successful()) {
+            Cache::forget('home_data_v2');
             return back()->with('success', 'Permintaan revisi berhasil dikirim ke user.');
         }
 
@@ -304,6 +235,7 @@ class AdminPostController extends Controller
         ]);
 
         if ($response->successful()) {
+            Cache::forget('home_data_v2');
             return back()->with('success', 'Karya berhasil ditolak dan user telah diberitahu.');
         }
 

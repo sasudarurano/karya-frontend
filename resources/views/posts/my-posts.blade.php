@@ -44,36 +44,54 @@
                  data-published="{{ $post['is_published'] ? 'true' : 'false' }}">
                 {{-- Thumbnail --}}
                 <div class="relative h-48 bg-gray-200 overflow-hidden group">
-                    @if(!empty($post['attachments']) && is_array($post['attachments']) && count($post['attachments']) > 0)
-                        @php
+                    @php
+                        $imageUrl = null;
+                        
+                        // Cek media folder GDrive
+                        if (!empty($post['gdrive_folder_items']) && is_array($post['gdrive_folder_items']) && count($post['gdrive_folder_items']) > 0) {
+                            foreach ($post['gdrive_folder_items'] as $item) {
+                                if (str_contains($item['mimeType'] ?? '', 'image') && !empty($item['thumbnailLink'])) {
+                                    $imageUrl = str_replace('=s220', '=w800', $item['thumbnailLink']);
+                                    break;
+                                }
+                            }
+                        }
+
+                        // Cek link file tunggal GDrive
+                        if (!$imageUrl && !empty($post['gdrive_url'])) {
+                            $gdriveUrl = $post['gdrive_url'];
+                            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+                            } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+                            }
+                        }
+                        
+                        if (!$imageUrl && !empty($post['attachments']) && is_array($post['attachments']) && count($post['attachments']) > 0) {
                             $firstFile = $post['attachments'][0];
-                        @endphp
-                        @if(is_array($firstFile) && str_contains($firstFile['mime'] ?? '', 'image'))
-                            @php
-                                // Ambil Path dari Database dan bersihkan slash
-                                $cleanPath = str_replace('\\', '/', $firstFile['file_url']);
-                                
-                                // Cek apakah path sudah berupa URL lengkap (http...)?
+                            if (is_array($firstFile) && str_contains($firstFile['mime'] ?? '', 'image')) {
+                                $cleanPath = str_replace('\\', '/', $firstFile['file_url'] ?? ('public/uploads/' . ($firstFile['filename'] ?? '')));
                                 if (str_starts_with($cleanPath, 'http')) {
                                     $imageUrl = $cleanPath;
                                 } else {
-                                    // Jika path relatif (public/uploads/...), susun URL-nya
-                                    $backendUrl = str_replace('/api', '', env('BACKEND_API_URL'));
-                                    $backendUrl = rtrim($backendUrl, '/'); // Hapus slash di akhir
-                                    $cleanPath = ltrim($cleanPath, '/'); // Hapus slash di awal
+                                    $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
+                                    $cleanPath = ltrim($cleanPath, '/');
                                     $imageUrl = $backendUrl . '/' . $cleanPath;
                                 }
-                            @endphp
-                            <img src="{{ $imageUrl }}" 
-                                 alt="{{ $post['title'] }}" 
-                                 class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                                 loading="lazy"
-                                 onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm p-4\'><span>Gagal Muat</span></div>';">
-                        @else
-                            <div class="w-full h-full flex items-center justify-center bg-blue-50 text-blue-400">
-                                <span class="text-5xl">📄</span>
-                            </div>
-                        @endif
+                            }
+                        }
+                    @endphp
+
+                    @if($imageUrl)
+                        <img src="{{ $imageUrl }}" 
+                             alt="{{ $post['title'] }}" 
+                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                             loading="lazy"
+                             onerror="this.onerror=null; this.parentElement.innerHTML='<div class=\'w-full h-full flex items-center justify-center bg-gray-100 text-gray-400 text-sm p-4\'><span>Gagal Muat</span></div>';">
+                    @elseif(!empty($post['attachments']) && is_array($post['attachments']) && count($post['attachments']) > 0)
+                        <div class="w-full h-full flex items-center justify-center bg-blue-50 text-blue-400">
+                            <span class="text-5xl">📄</span>
+                        </div>
                     @else
                         <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300">
                             <span class="text-5xl">🖼️</span>
@@ -112,7 +130,7 @@
                     </h3>
                     
                     <p class="text-sm text-gray-600 mb-3 line-clamp-2">
-                        {{ $post['caption'] ?? 'Tidak ada deskripsi' }}
+                        {{ strip_tags($post['caption'] ?? 'Tidak ada deskripsi') }}
                     </p>
 
                     <div class="flex items-center justify-between mb-4 text-xs text-gray-500">

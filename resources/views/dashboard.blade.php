@@ -109,6 +109,7 @@
             @if(isset($posts) && count($posts) > 0)
                 <div class="space-y-6">
                     @foreach($posts as $post)
+                        {{-- Post Item --}}
                         <div class="bg-white rounded-3xl shadow-sm hover:shadow-xl border border-gray-100 transition-all duration-300 overflow-hidden group">
                             <div class="flex flex-col md:flex-row">
                                 {{-- Thumbnail Section --}}
@@ -209,6 +210,37 @@
                             </div>
                         </div>
                     @endforeach
+
+                    {{-- Pagination Feed --}}
+                    @if(isset($meta) && $meta['last_page'] > 1)
+                        <div class="flex justify-between items-center bg-white p-4 rounded-3xl border border-gray-100 shadow-sm mt-8 animate-fade-in-up">
+                            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest pl-2">
+                                Halaman {{ $meta['page'] }} / {{ $meta['last_page'] }}
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                @if($meta['page'] > 1)
+                                    <a href="{{ route('dashboard.feed', ['page' => $meta['page'] - 1]) }}" 
+                                       class="px-5 py-2.5 bg-gray-50 text-gray-700 rounded-xl hover:bg-blue-600 hover:text-white transition font-bold text-xs border border-gray-100 flex items-center group">
+                                        <svg class="w-4 h-4 mr-2 transform group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                                        </svg>
+                                        Sebelumnya
+                                    </a>
+                                @endif
+
+                                @if($meta['page'] < $meta['last_page'])
+                                    <a href="{{ route('dashboard.feed', ['page' => $meta['page'] + 1]) }}" 
+                                       class="px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition font-bold text-xs shadow-lg shadow-blue-500/30 flex items-center group">
+                                        Selanjutnya
+                                        <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                                        </svg>
+                                    </a>
+                                @endif
+                            </div>
+                        </div>
+                    @endif
                 </div>
             @else
                 {{-- Empty State --}}

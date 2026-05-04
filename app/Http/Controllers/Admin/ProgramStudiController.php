@@ -19,14 +19,35 @@ class ProgramStudiController extends Controller
     /**
      * Display list of all program studi
      */
-    public function index()
+    public function index(Request $request)
     {
         try {
-            $response = $this->api->getAllProgramStudi();
+            $search = $request->query('search');
+            $page = $request->query('page', 1);
+            $limit = 10;
+
+            $params = [
+                'search' => $search,
+                'page' => $page,
+                'limit' => $limit
+            ];
+
+            $response = $this->api->getAllProgramStudi($params);
 
             if ($response->successful()) {
-                $programStudiList = $response->json()['data'] ?? [];
-                return view('admin.program-studi.index', compact('programStudiList'));
+                $responseData = $response->json();
+                
+                // New structure: { success: true, data: { data: [], meta: {} }, message: "" }
+                // or the old structure from BaseController handleSuccess
+                if (isset($responseData['data']['data'])) {
+                    $programStudiList = $responseData['data']['data'];
+                    $meta = $responseData['data']['meta'] ?? [];
+                } else {
+                    $programStudiList = $responseData['data'] ?? [];
+                    $meta = [];
+                }
+
+                return view('admin.program-studi.index', compact('programStudiList', 'meta', 'search'));
             }
 
             return back()->with('error', 'Gagal mengambil data program studi.');

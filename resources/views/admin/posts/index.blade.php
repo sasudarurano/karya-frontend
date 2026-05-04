@@ -111,69 +111,81 @@
         @endif
 
         {{-- Main Content Card --}}
-        @if(empty($posts))
-            {{-- Empty State --}}
-            <div class="bg-white rounded-[2rem] border border-dashed border-slate-300 p-20 text-center shadow-sm">
-                <div class="w-24 h-24 bg-gradient-to-br from-slate-50 to-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 shadow-inner">
-                    <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                </div>
-                <h3 class="text-xl font-bold text-slate-800">Antrean Bersih!</h3>
-                <p class="text-slate-500 mt-2 max-w-md mx-auto">Tidak ada karya yang perlu dimoderasi saat ini. Kerja bagus!</p>
-                
-                {{-- Helper for Empty State Debugging --}}
-                @if(config('app.debug'))
-                    <div class="mt-8 mx-auto max-w-lg text-left bg-slate-900 rounded-xl p-4 font-mono text-xs text-slate-400">
-                        <p class="text-yellow-400 font-bold mb-2">// DEBUG CHECKLIST</p>
-                        <ul class="space-y-1">
-                            <li>API Status: <span class="text-white">{{ session('api_token') ? 'Connected' : 'No Token' }}</span></li>
-                            <li>Total Data: <span class="text-white">{{ $total ?? 0 }}</span></li>
-                        </ul>
+        <div class="bg-white rounded-[1.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden mb-12">
+            
+            {{-- Filter Toolbar --}}
+            <div class="p-5 border-b border-slate-100 bg-white">
+                <form method="GET" class="flex flex-col lg:flex-row gap-4 items-end lg:items-center justify-between">
+                    <div class="flex-1 w-full grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+                            </div>
+                            <input type="text" name="search" value="{{ $searchQuery }}" 
+                                class="pl-10 block w-full rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-blue-500 focus:ring-blue-500" 
+                                placeholder="Cari judul atau penulis...">
+                            @if($searchQuery)
+                            <a href="{{ route('admin.posts.index', array_merge(request()->query(), ['search' => null])) }}" class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 transition">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                            </a>
+                            @endif
+                        </div>
+
+                        <div>
+                            <select name="category" class="block w-full rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-600">
+                                <option value="">Semua Kategori</option>
+                                @foreach($availableCategories as $cat)
+                                    <option value="{{ $cat }}" {{ $filterCategory === $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <select name="prodi" class="block w-full rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-600">
+                                <option value="">Semua Program Studi</option>
+                                @foreach($availableProdis as $prodi)
+                                    <option value="{{ $prodi }}" {{ $filterProdi === $prodi ? 'selected' : '' }}>{{ $prodi }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                @endif
+
+                    <div class="flex items-center gap-2 w-full lg:w-auto justify-end">
+                        <a href="{{ route('admin.posts.index') }}" class="px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition">Reset</a>
+                        <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold shadow-lg shadow-slate-200 transition-all transform active:scale-95">
+                            <span>Terapkan Filter</span>
+                        </button>
+                    </div>
+                </form>
             </div>
-        @else
-            <div class="bg-white rounded-[1.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 overflow-hidden">
-                
-                {{-- Filter Toolbar --}}
-                <div class="p-5 border-b border-slate-100 bg-white">
-                    <form method="GET" class="flex flex-col lg:flex-row gap-4 items-end lg:items-center justify-between">
-                        <div class="flex-1 w-full grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
-                                </div>
-                                <input type="text" name="search" value="{{ $searchQuery }}" 
-                                    class="pl-10 block w-full rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-blue-500 focus:ring-blue-500" 
-                                    placeholder="Cari judul atau penulis...">
-                            </div>
 
-                            <div>
-                                <select name="category" class="block w-full rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-600">
-                                    <option value="">Semua Kategori</option>
-                                    @foreach($availableCategories as $cat)
-                                        <option value="{{ $cat }}" {{ $filterCategory === $cat ? 'selected' : '' }}>{{ ucfirst($cat) }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
-
-                            <div>
-                                <select name="prodi" class="block w-full rounded-xl border-slate-200 bg-slate-50 text-sm focus:border-blue-500 focus:ring-blue-500 text-slate-600">
-                                    <option value="">Semua Program Studi</option>
-                                    @foreach($availableProdis as $prodi)
-                                        <option value="{{ $prodi }}" {{ $filterProdi === $prodi ? 'selected' : '' }}>{{ $prodi }}</option>
-                                    @endforeach
-                                </select>
-                            </div>
+            @if(empty($posts))
+                {{-- Empty State --}}
+                <div class="p-20 text-center">
+                    <div class="w-24 h-24 bg-gradient-to-br from-slate-50 to-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-300 shadow-inner">
+                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-slate-800">
+                        @if($searchQuery || $filterCategory || $filterProdi)
+                            Hasil tidak ditemukan
+                        @else
+                            Antrean Bersih!
+                        @endif
+                    </h3>
+                    <p class="text-slate-500 mt-2 max-w-md mx-auto">
+                        @if($searchQuery || $filterCategory || $filterProdi)
+                            Tidak ada karya yang cocok dengan kriteria pencarian Anda.
+                        @else
+                            Tidak ada karya yang perlu dimoderasi saat ini. Kerja bagus!
+                        @endif
+                    </p>
+                    @if($searchQuery || $filterCategory || $filterProdi)
+                        <div class="mt-8">
+                            <a href="{{ route('admin.posts.index') }}" class="text-blue-600 font-bold hover:underline">Lihat semua karya →</a>
                         </div>
-
-                        <div class="flex items-center gap-2 w-full lg:w-auto justify-end">
-                            <a href="{{ route('admin.posts.index') }}" class="px-4 py-2.5 text-sm font-bold text-slate-500 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition">Reset</a>
-                            <button type="submit" class="inline-flex items-center gap-2 px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-bold shadow-lg shadow-slate-200 transition-all transform active:scale-95">
-                                <span>Terapkan Filter</span>
-                            </button>
-                        </div>
-                    </form>
+                    @endif
                 </div>
+            @else
 
                 {{-- Table --}}
                 <div class="overflow-x-auto">
@@ -358,12 +370,36 @@
                     </table>
                 </div>
 
-                {{-- Pagination Placeholder (Optional if needed) --}}
-                <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex justify-center text-xs text-slate-500">
-                    Menampilkan {{ count($posts) }} data
+                {{-- Pagination --}}
+                <div class="px-6 py-4 bg-slate-50 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
+                    <p class="text-xs text-slate-400 font-medium">
+                        Menampilkan <span class="font-bold text-slate-600">{{ count($posts) }}</span> dari <span class="font-bold text-slate-600">{{ $meta['total'] ?? count($posts) }}</span> karya.
+                    </p>
+                    
+                    @if(isset($meta) && isset($meta['last_page']) && $meta['last_page'] > 1)
+                    <div class="flex items-center gap-2">
+                        @if($meta['page'] > 1)
+                        <a href="{{ route('admin.posts.index', array_merge(request()->query(), ['page' => $meta['page'] - 1])) }}" 
+                           class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-sm">
+                            Sebelumnya
+                        </a>
+                        @endif
+
+                        <span class="text-xs font-bold text-slate-500 px-2">
+                            {{ $meta['page'] }} / {{ $meta['last_page'] }}
+                        </span>
+
+                        @if($meta['page'] < $meta['last_page'])
+                        <a href="{{ route('admin.posts.index', array_merge(request()->query(), ['page' => $meta['page'] + 1])) }}" 
+                           class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-600 hover:bg-slate-50 transition shadow-sm">
+                            Selanjutnya
+                        </a>
+                        @endif
+                    </div>
+                    @endif
                 </div>
-            </div>
-        @endif
+            @endif
+        </div>
 
         {{-- Debug Panel (Collapsed by default style) --}}
         @if(config('app.debug'))

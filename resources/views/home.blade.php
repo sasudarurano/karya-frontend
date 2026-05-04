@@ -127,83 +127,7 @@
                     <x-post-card :post="$post" />
                 @endforeach
             </div>
-            
-            {{-- Pagination untuk Newest Posts --}}
-            @if(isset($newestPagination) && $newestPagination['totalPages'] > 1)
-                <div class="mt-10 flex justify-center">
-                    <nav class="inline-flex items-center gap-2 bg-white rounded-xl shadow-sm border border-slate-200 p-2">
-                        {{-- Previous Button --}}
-                        @if($newestPagination['hasPrevPage'])
-                            <a href="{{ route('home', array_merge(request()->except('newest_page'), ['newest_page' => $newestPagination['currentPage'] - 1])) }}" 
-                               class="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                                Sebelumnya
-                            </a>
-                        @else
-                            <span class="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 cursor-not-allowed flex items-center gap-1">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
-                                Sebelumnya
-                            </span>
-                        @endif
-
-                        {{-- Page Numbers --}}
-                        @php
-                            $currentPage = $newestPagination['currentPage'];
-                            $totalPages = $newestPagination['totalPages'];
-                            $range = 2; // Menampilkan 2 halaman sebelum dan sesudah
-                            $start = max(1, $currentPage - $range);
-                            $end = min($totalPages, $currentPage + $range);
-                        @endphp
-
-                        @if($start > 1)
-                            <a href="{{ route('home', array_merge(request()->except('newest_page'), ['newest_page' => 1])) }}" 
-                               class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors">
-                                1
-                            </a>
-                            @if($start > 2)
-                                <span class="px-2 text-slate-400">...</span>
-                            @endif
-                        @endif
-
-                        @for($i = $start; $i <= $end; $i++)
-                            @if($i == $currentPage)
-                                <span class="px-3 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white">
-                                    {{ $i }}
-                                </span>
-                            @else
-                                <a href="{{ route('home', array_merge(request()->except('newest_page'), ['newest_page' => $i])) }}" 
-                                   class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors">
-                                    {{ $i }}
-                                </a>
-                            @endif
-                        @endfor
-
-                        @if($end < $totalPages)
-                            @if($end < $totalPages - 1)
-                                <span class="px-2 text-slate-400">...</span>
-                            @endif
-                            <a href="{{ route('home', array_merge(request()->except('newest_page'), ['newest_page' => $totalPages])) }}" 
-                               class="px-3 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors">
-                                {{ $totalPages }}
-                            </a>
-                        @endif
-
-                        {{-- Next Button --}}
-                        @if($newestPagination['hasNextPage'])
-                            <a href="{{ route('home', array_merge(request()->except('newest_page'), ['newest_page' => $newestPagination['currentPage'] + 1])) }}" 
-                               class="px-4 py-2 rounded-lg text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors flex items-center gap-1">
-                                Selanjutnya
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                            </a>
-                        @else
-                            <span class="px-4 py-2 rounded-lg text-sm font-medium text-slate-400 cursor-not-allowed flex items-center gap-1">
-                                Selanjutnya
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
-                            </span>
-                        @endif
-                    </nav>
-                </div>
-            @endif
+            </div>
         @else
             <div class="flex flex-col items-center justify-center py-16 px-4 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
                 <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-400">
@@ -216,22 +140,18 @@
     </section>
 
     {{-- CTA / Bottom Section --}}
+    @if(!session('user'))
     <section class="relative bg-blue-600 rounded-3xl overflow-hidden py-16 px-8 text-center">
         <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
         <div class="relative z-10 max-w-2xl mx-auto">
             <h2 class="text-3xl font-bold text-white mb-4">Punya Karya Hebat yang Ingin Dibagikan?</h2>
             <p class="text-blue-100 mb-8 text-lg">Jangan biarkan karyamu hanya tersimpan di laptop. Publikasikan sekarang dan bangun portofolio digitalmu.</p>
-            @auth
-                <a href="{{ route('posts.create') }}" class="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-blue-50 transition transform hover:-translate-y-1">
-                    Upload Karya Sekarang
-                </a>
-            @else
-                <a href="{{ route('login') }}" class="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-blue-50 transition transform hover:-translate-y-1">
-                    Login untuk Upload
-                </a>
-            @endauth
+            <a href="{{ route('login') }}" class="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-blue-50 transition transform hover:-translate-y-1">
+                Login untuk Upload
+            </a>
         </div>
     </section>
+    @endif
 
 </div>
 

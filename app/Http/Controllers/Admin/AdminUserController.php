@@ -20,20 +20,40 @@ class AdminUserController extends Controller
     /**
      * Tampilkan daftar user
      */
-    public function index()
+    public function index(Request $request)
     {
         // FIX: Ambil token admin
         $token = Session::get('api_token');
 
+        $search = $request->query('search');
+        $page = $request->query('page', 1);
+        $limit = 10;
+
+        $params = [
+            'search' => $search,
+            'page' => $page,
+            'limit' => $limit
+        ];
+
         // Kirim token ke API untuk otentikasi admin
-        $response = $this->api->getAllUsers($token);
+        $response = $this->api->getAllUsers($params, $token);
         
         $users = [];
+        $meta = [];
         $error_message = null;
         $debug_info = null;
 
         if ($response->successful()) {
-            $users = $response->json()['data'] ?? [];
+            $responseData = $response->json();
+            
+            // Check for nested structure
+            if (isset($responseData['data']['data'])) {
+                $users = $responseData['data']['data'];
+                $meta = $responseData['data']['meta'] ?? [];
+            } else {
+                $users = $responseData['data'] ?? [];
+                $meta = [];
+            }
             
             Log::info('Admin getAllUsers response:', [
                 'total_users' => count($users),
@@ -60,7 +80,7 @@ class AdminUserController extends Controller
             $error_message = 'Gagal mengambil data user. Status: ' . $response->status();
         }
 
-        return view('admin.users.index', compact('users', 'error_message', 'debug_info'));
+        return view('admin.users.index', compact('users', 'meta', 'search', 'error_message', 'debug_info'));
     }
 
     /**

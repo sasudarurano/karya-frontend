@@ -66,13 +66,16 @@ class DashboardController extends Controller
      */
     private function renderUserFeed(): RedirectResponse|View
     {
-        $response = $this->api->getFollowingPosts();
+        $page = request()->query('page', 1);
+        $response = $this->api->getFollowingPosts(['page' => $page, 'limit' => 10]);
 
         if ($response->status() === 401) {
             return redirect()->route('login')->with('error', 'Sesi habis, silakan login kembali.');
         }
 
-        $posts = $response->successful() ? ($response->json()['data'] ?? []) : [];
+        $result = $response->successful() ? ($response->json()['data'] ?? []) : [];
+        $posts = $result['data'] ?? [];
+        $meta = $result['meta'] ?? null;
 
         $profilePicture = null;
         $followingCount = 0;
@@ -103,7 +106,7 @@ class DashboardController extends Controller
             }
         }
 
-        return view('dashboard', compact('posts', 'profilePicture', 'followingCount'));
+        return view('dashboard', compact('posts', 'profilePicture', 'followingCount', 'meta'));
     }
 
     private function isSuperAdmin(string $role): bool

@@ -44,10 +44,86 @@
             @endforeach
         </div>
 
-        {{-- Pagination Info --}}
+    {{-- Pagination Controls (Adapted from Home) --}}
+    @if(isset($pagination) && $pagination['totalPages'] > 1)
+        <div class="mt-16 flex justify-center">
+            <nav class="inline-flex items-center gap-2 bg-white rounded-xl shadow-sm border border-gray-200 p-2">
+                {{-- Previous Button --}}
+                @if($pagination['hasPrevPage'])
+                    <a href="{{ request()->fullUrlWithQuery(['page' => $pagination['currentPage'] - 1]) }}" 
+                       class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                        Sebelumnya
+                    </a>
+                @else
+                    <span class="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                        Sebelumnya
+                    </span>
+                @endif
+
+                {{-- Page Numbers --}}
+                @php
+                    $currentPage = $pagination['currentPage'];
+                    $totalPages = $pagination['totalPages'];
+                    $range = 2;
+                    $start = max(1, $currentPage - $range);
+                    $end = min($totalPages, $currentPage + $range);
+                @endphp
+
+                @if($start > 1)
+                    <a href="{{ request()->fullUrlWithQuery(['page' => 1]) }}" 
+                       class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">1</a>
+                    @if($start > 2)
+                        <span class="px-2 text-gray-400">...</span>
+                    @endif
+                @endif
+
+                @for($i = $start; $i <= $end; $i++)
+                    @if($i == $currentPage)
+                        <span class="px-3 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white shadow-md">
+                            {{ $i }}
+                        </span>
+                    @else
+                        <a href="{{ request()->fullUrlWithQuery(['page' => $i]) }}" 
+                           class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">
+                            {{ $i }}
+                        </a>
+                    @endif
+                @endfor
+
+                @if($end < $totalPages)
+                    @if($end < $totalPages - 1)
+                        <span class="px-2 text-gray-400">...</span>
+                    @endif
+                    <a href="{{ request()->fullUrlWithQuery(['page' => $totalPages]) }}" 
+                       class="px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors">{{ $totalPages }}</a>
+                @endif
+
+                {{-- Next Button --}}
+                @if($pagination['hasNextPage'])
+                    <a href="{{ request()->fullUrlWithQuery(['page' => $pagination['currentPage'] + 1]) }}" 
+                       class="px-4 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-1">
+                        Selanjutnya
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </a>
+                @else
+                    <span class="px-4 py-2 rounded-lg text-sm font-medium text-gray-400 cursor-not-allowed flex items-center gap-1">
+                        Selanjutnya
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+                    </span>
+                @endif
+            </nav>
+        </div>
+        
+        <div class="mt-4 text-center text-gray-500 text-sm">
+            Menampilkan halaman {{ $pagination['currentPage'] }} dari {{ $pagination['totalPages'] }} (Total {{ $pagination['totalCount'] }} karya)
+        </div>
+    @else
         <div class="mt-16 text-center text-gray-500 text-sm">
             <p>Menampilkan semua {{ count($allPosts) }} karya</p>
         </div>
+    @endif
     @else
         <div class="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
             <svg class="w-20 h-20 mx-auto text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

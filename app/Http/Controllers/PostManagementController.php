@@ -62,8 +62,7 @@ class PostManagementController extends Controller
             'supervisor_id' => 'nullable|string',
             'contributor_ids' => 'nullable|array',
             'contributor_ids.*' => 'nullable|string',
-            'post_images' => 'nullable|array|max:5',
-            'post_images.*' => 'file|mimes:jpg,jpeg,png,webp|max:10240',
+            'gdrive_url' => 'nullable|url',
             'post_document' => 'nullable|file|mimes:pdf|max:10240',
             'url_youtube' => 'nullable|url',
             'url_karya' => 'nullable|url',
@@ -91,6 +90,7 @@ class PostManagementController extends Controller
                 'url_karya' => !empty($validated['url_karya']) ? $validated['url_karya'] : null,
                 'start_date' => !empty($validated['start_date']) ? $validated['start_date'] : null,
                 'end_date' => !empty($validated['end_date']) ? $validated['end_date'] : null,
+                'gdrive_url' => !empty($validated['gdrive_url']) ? $validated['gdrive_url'] : null,
             ];
 
             // Include updated existing file ids (as JSON string) so backend replaces correctly
@@ -104,13 +104,6 @@ class PostManagementController extends Controller
 
             // Collect files only if provided
             $allFiles = [];
-            if ($request->hasFile('post_images') && is_array($request->file('post_images'))) {
-                foreach ($request->file('post_images') as $img) {
-                    if ($img && $img->isValid()) {
-                        $allFiles[] = $img;
-                    }
-                }
-            }
             if ($request->hasFile('post_document') && $request->file('post_document')->isValid()) {
                 $allFiles[] = $request->file('post_document');
             }

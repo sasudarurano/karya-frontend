@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Session; // Tambahkan facade Session
+use Illuminate\Support\Facades\Cache; // Tambahkan facade Cache
 use Carbon\Carbon;
 
 class PostController extends Controller
@@ -27,24 +28,34 @@ class PostController extends Controller
         // 1. Logika View All (Sort - Popular/Newest)
         if ($request->has('sort') && in_array($request->input('sort'), ['popular', 'newest'])) {
             $sort = $request->input('sort');
+            $page = $request->input('page', 1);
+            $limit = 20; // Reduce limit from 1000 to 20 for performance
+
+            $cacheKey = "view_all_{$sort}_page_{$page}";
+
+            // Cache for 5 minutes (300 seconds)
+            $data = Cache::remember($cacheKey, 300, function () use ($sort, $limit, $page) {
+                if ($sort === 'popular') {
+                    $response = $this->api->getPopularPosts($limit, $page);
+                } else {
+                    $response = $this->api->getNewestPosts($limit, $page);
+                }
+                return $response->successful() ? ($response->json()['data'] ?? null) : null;
+            });
+
+            $title = $sort === 'popular' ? 'Karya Paling Populer' : 'Karya Baru Diupload';
             
-            if ($sort === 'popular') {
-                $response = $this->api->getPopularPosts(1000); // Get many posts
-                $title = 'Karya Paling Populer';
-            } else {
-                $response = $this->api->getNewestPosts(1000); // Get many posts
-                $title = 'Karya Baru Diupload';
+            // Handle both structure types (just in case)
+            $allPosts = $data['posts'] ?? ($data ?? []); // If backend returns object with posts key or just array
+            $pagination = $data['pagination'] ?? null;
+            
+            // If data is just an array (fallback), manually slice for "fake" pagination (if backend update failed/delayed)
+            if (is_array($data) && !isset($data['posts']) && count($data) > $limit) {
+                // This fallback shouldn't be reached if backend is updated correctly
+                $allPosts = array_slice($data, 0, $limit); 
             }
-            
-            $allPosts = $response->successful() ? ($response->json()['data'] ?? []) : [];
-            
-            Log::info("View all {$sort} posts", [
-                'sort' => $sort,
-                'count' => count($allPosts),
-                'status' => $response->status()
-            ]);
-            
-            return view('posts.all', compact('allPosts', 'sort', 'title'));
+
+            return view('posts.all', compact('allPosts', 'sort', 'title', 'pagination'));
         }
 
         // 2. Logika Pencarian & Filter Kategori
@@ -56,59 +67,58 @@ class PostController extends Controller
                 'page' => $request->input('page', 1),
             ], fn($value) => $value !== null && $value !== '');
             
-            Log::info('Search request initiated', [
-                'filters' => $filters,
-                'request_data' => $request->all()
-            ]);
+            // Cache search results for 1 minute only
+            $cacheKey = 'search_' . md5(json_encode($filters));
             
-            // A. Cari Postingan/Karya
-            $response = $this->api->getPosts($filters);
-            
-            // B. Cari Users (FIX: Menambahkan logika pencarian user)
-            $users = [];
-            if ($request->has('search') && !empty($request->input('search'))) {
-                try {
-                    // Menggunakan endpoint general /users dengan parameter search
-                    // Pastikan Service KaryaApi memiliki method get() yang fleksibel atau buat method searchUsers
-                    $userResponse = $this->api->get('/users', ['search' => $request->input('search'), 'limit' => 5]);
-                    
-                    if ($userResponse->successful()) {
-                        $users = $userResponse->json()['data'] ?? [];
-                    }
-                } catch (\Exception $e) {
-                    Log::warning('User search failed: ' . $e->getMessage());
+            $searchData = Cache::remember($cacheKey, 60, function () use ($filters, $request) {
+                $response = $this->api->getPosts($filters);
+                
+                $users = [];
+                // Only search users if search query present
+                if (isset($filters['search'])) {
+                    try {
+                        $userResponse = $this->api->searchUsers(['search' => $filters['search'], 'limit' => 5]);
+                        if ($userResponse->successful()) {
+                            $users = $userResponse->json()['data'] ?? [];
+                        }
+                    } catch (\Exception $e) {}
                 }
-            }
+
+                return [
+                    'searchResults' => $response->successful() ? ($response->json()['data'] ?? []) : [],
+                    'apiError' => !$response->successful() ? ($response->json()['message'] ?? $response->body()) : null,
+                    'users' => $users
+                ];
+            });
             
-            if (!$response->successful()) {
-                Log::error('Search API Error', [
-                    'status' => $response->status(),
-                    'body' => $response->body(),
-                    'filters_sent' => $filters
-                ]);
-            }
+            $searchResults = $searchData['searchResults'];
+            $users = $searchData['users'];
+            $apiError = $searchData['apiError'];
             
-            $searchResults = $response->successful() ? ($response->json()['data'] ?? []) : [];
-            $apiError = !$response->successful() ? ($response->json()['message'] ?? $response->body()) : null;
-            
-            // Mengirim data users juga ke view search_results
             return view('search_results', compact('searchResults', 'users', 'apiError'));
         }
 
-        // 3. Logika Halaman Utama (Popular & Newest)
-        // Mengambil data dengan limit 6 karya per bagian
-        $newestPage = $request->input('newest_page', 1);
-        $newestResp = $this->api->getNewestPosts(6, $newestPage);
-        $popularResp = $this->api->getPopularPosts(6);
-
-        // Extract posts and pagination info from newest posts response
-        $newestData = $newestResp->successful() ? $newestResp->json()['data'] : [];
-        $newestPosts = $newestData['posts'] ?? [];
-        $newestPagination = $newestData['pagination'] ?? null;
+        // 3. Logika Halaman Utama (Popular & Terbaru)
+        // Fixed limit of 6 posts for each section on homepage
+        $cacheKey = "home_data_v2"; // Increment version to invalidate old paginated cache
         
-        $popularPosts = ($popularResp->successful() ? ($popularResp->json()['data'] ?? []) : []);
+        $homeData = Cache::remember($cacheKey, 300, function () {
+            $newestResp = $this->api->getNewestPosts(6, 1);
+            $popularResp = $this->api->getPopularPosts(6, 1);
 
-        return view('home', compact('newestPosts', 'newestPagination', 'popularPosts'));
+            $newestDataRaw = $newestResp->successful() ? $newestResp->json()['data'] : [];
+            $popularDataRaw = $popularResp->successful() ? $popularResp->json()['data'] : [];
+
+            return [
+                'newestPosts' => $newestDataRaw['posts'] ?? [],
+                'popularPosts' => $popularDataRaw['posts'] ?? ($popularDataRaw ?? [])
+            ];
+        });
+
+        $newestPosts = $homeData['newestPosts'];
+        $popularPosts = $homeData['popularPosts'];
+
+        return view('home', compact('newestPosts', 'popularPosts'));
     }
 
     /**
@@ -263,8 +273,7 @@ class PostController extends Controller
             'supervisor_id' => 'nullable|string',
             'contributor_ids' => 'nullable|array',
             'contributor_ids.*' => 'nullable|string',
-            'post_images' => 'required|array|min:1|max:5',
-            'post_images.*' => 'file|mimes:jpg,jpeg,png,webp|max:10240',
+            'gdrive_url' => 'nullable|url',
             'post_document' => 'nullable|file|mimes:pdf|max:10240',
             'url_youtube' => 'nullable|url',
             'url_karya' => 'nullable|url',
@@ -301,16 +310,12 @@ class PostController extends Controller
             'url_karya'       => !empty($request->url_karya) ? $request->url_karya : null,
             'start_date'      => !empty($request->start_date) ? $request->start_date : null,
             'end_date'        => !empty($request->end_date) ? $request->end_date : null,
+            'gdrive_url'      => !empty($request->gdrive_url) ? $request->gdrive_url : null,
             'is_published'    => false, // Default false untuk moderasi admin
         ];
 
-        // 3. Pengolahan File (Multipart - max 5 images + 1 PDF)
+        // 3. Pengolahan File (Multipart - hanya 1 PDF jika ada)
         $allFiles = [];
-        if ($request->hasFile('post_images')) {
-            foreach($request->file('post_images') as $file) {
-                $allFiles[] = $file;
-            }
-        }
         if ($request->hasFile('post_document')) {
             $allFiles[] = $request->file('post_document');
         }

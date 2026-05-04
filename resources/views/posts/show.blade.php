@@ -107,26 +107,75 @@
                 </header>
 
                 {{-- 2. Media Showcase --}}
+                <div class="space-y-4 mb-4">
+                    <h3 class="text-xl font-bold text-slate-900 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></span>
+                        Screenshoot / Media Karya
+                    </h3>
+                    <p class="text-xs text-slate-500 bg-blue-50/50 border border-blue-100 p-3 rounded-xl flex items-center gap-2">
+                        <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Pastikan akses link Google Drive diubah ke "Anyone with the link" agar media dapat tampil di sini.
+                    </p>
+                </div>
+
                 <div class="space-y-8">
-                    @if(!empty($post['attachments']) && count($post['attachments']) > 0)
+                    @php
+                        $mediaItems = [];
+                        if (!empty($post['gdrive_folder_items']) && count($post['gdrive_folder_items']) > 0) {
+                            foreach($post['gdrive_folder_items'] as $item) {
+                                if (str_contains($item['mimeType'] ?? '', 'image') || str_contains($item['mimeType'] ?? '', 'video')) {
+                                    $mediaItems[] = [
+                                        'type' => str_contains($item['mimeType'], 'image') ? 'image' : 'video',
+                                        'url' => str_contains($item['mimeType'], 'image') ? str_replace('=s220', '=w1500', $item['thumbnailLink'] ?? '') : ($item['webContentLink'] ?? ''),
+                                        'thumbnail' => $item['thumbnailLink'] ?? null
+                                    ];
+                                }
+                            }
+                        } elseif (!empty($post['attachments']) && count($post['attachments']) > 0) {
+                            foreach($post['attachments'] as $item) {
+                                if (str_contains($item['mime'] ?? '', 'image')) {
+                                    $imgUrl = getSafeUrl($item['file_url'], $backendBaseUrl);
+                                    $mediaItems[] = [
+                                        'type' => 'image',
+                                        'url' => $imgUrl,
+                                        'thumbnail' => $imgUrl
+                                    ];
+                                } elseif (str_contains($item['mime'] ?? '', 'video')) {
+                                    $vidUrl = getSafeUrl($item['file_url'], $backendBaseUrl);
+                                    $mediaItems[] = [
+                                        'type' => 'video',
+                                        'url' => $vidUrl,
+                                        'thumbnail' => null
+                                    ];
+                                }
+                            }
+                        }
+                    @endphp
+
+                    @if(count($mediaItems) > 0)
                         <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 bg-slate-900 aspect-video group select-none" id="imageSlider">
                             {{-- Slides Container --}}
-                            @foreach($post['attachments'] as $index => $file)
-                                @if(str_contains($file['mime'] ?? '', 'image'))
-                                    @php $imgUrl = getSafeUrl($file['file_url'], $backendBaseUrl); @endphp
+                            @foreach($mediaItems as $index => $item)
+                                @if($item['type'] === 'image')
                                     <div class="slide-item absolute inset-0 w-full h-full transition-opacity duration-500 ease-out {{ $index === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0' }}" data-index="{{ $index }}">
                                         {{-- Artistic Blur Backdrop --}}
-                                        <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-[50px] scale-125 transform translate-y-10" style="background-image: url('{{ $imgUrl }}');"></div>
+                                        <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-[50px] scale-125 transform translate-y-10" style="background-image: url('{{ $item['url'] }}');"></div>
                                         {{-- Main Image --}}
                                         <div class="absolute inset-0 flex items-center justify-center p-2 sm:p-4">
-                                            <img src="{{ $imgUrl }}" class="max-w-full max-h-full object-contain rounded-lg shadow-lg relative z-10" alt="{{ $post['title'] }}">
+                                            <img src="{{ $item['url'] }}" class="max-w-full max-h-full object-contain rounded-lg shadow-lg relative z-10" alt="{{ $post['title'] }}">
                                         </div>
+                                    </div>
+                                @elseif($item['type'] === 'video')
+                                    <div class="slide-item absolute inset-0 w-full h-full transition-opacity duration-500 ease-out {{ $index === 0 ? 'opacity-100 z-10' : 'opacity-0 z-0' }} bg-black" data-index="{{ $index }}">
+                                        <video src="{{ $item['url'] }}" controls controlsList="nodownload" class="w-full h-full object-contain outline-none pb-8"></video>
                                     </div>
                                 @endif
                             @endforeach
 
                             {{-- Navigation & Dots --}}
-                            @if(count($post['attachments']) > 1)
+                            @if(count($mediaItems) > 1)
                                 <div class="absolute inset-0 z-20 flex items-center justify-between p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
                                     <button onclick="changeSlide(-1)" class="pointer-events-auto p-3 rounded-full bg-black/20 hover:bg-black/50 text-white backdrop-blur-md transition-all hover:scale-105 border border-white/10">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
@@ -136,29 +185,71 @@
                                     </button>
                                 </div>
                                 <div class="absolute bottom-6 left-0 right-0 flex justify-center gap-2 z-20">
-                                    @foreach($post['attachments'] as $index => $file)
-                                        @if(str_contains($file['mime'], 'image'))
-                                            <button onclick="goToSlide({{ $index }})" class="dot-indicator h-1.5 rounded-full transition-all duration-300 shadow-sm {{ $index === 0 ? 'bg-white w-8' : 'bg-white/40 hover:bg-white w-2' }}" data-index="{{ $index }}"></button>
-                                        @endif
+                                    @foreach($mediaItems as $index => $item)
+                                        <button onclick="goToSlide({{ $index }})" class="dot-indicator h-1.5 rounded-full transition-all duration-300 shadow-sm {{ $index === 0 ? 'bg-white w-8' : 'bg-white/40 hover:bg-white w-2' }}" data-index="{{ $index }}"></button>
                                     @endforeach
                                 </div>
                             @endif
                         </div>
-                    @endif
-
-                    {{-- YouTube Video --}}
-                    @if(!empty($post['url_youtube']))
+                    @elseif(!empty($post['gdrive_url']))
                         @php
-                            preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([\w-]{11})/i', $post['url_youtube'], $matches);
-                            $videoId = $matches[1] ?? null;
+                            $gdriveUrl = $post['gdrive_url'];
+                            $fileId = null;
+                            $folderId = null;
+
+                            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                $fileId = $matches[1];
+                            } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                $fileId = $matches[1];
+                            } elseif (preg_match('/drive\.google\.com\/drive\/folders\/([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                $folderId = $matches[1];
+                            }
                         @endphp
-                        @if($videoId)
-                            <div class="rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 border-4 border-white bg-black aspect-video relative z-0">
-                                <iframe class="w-full h-full" src="https://www.youtube.com/embed/{{ $videoId }}" frameborder="0" allowfullscreen></iframe>
+                        
+                        @if($folderId)
+                            <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 border border-slate-200 min-h-[400px] sm:min-h-[500px]">
+                                <iframe src="https://drive.google.com/embeddedfolderview?id={{ $folderId }}#list" class="w-full h-full absolute inset-0" frameborder="0"></iframe>
+                            </div>
+                        @elseif($fileId)
+                            <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 bg-slate-900 aspect-video group select-none flex items-center justify-center">
+                                <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-[50px] scale-125 transform translate-y-10" style="background-image: url('https://drive.google.com/thumbnail?id={{ $fileId }}&sz=w1000');"></div>
+                                <img src="https://drive.google.com/thumbnail?id={{ $fileId }}&sz=w1000" class="max-w-full max-h-full object-contain rounded-lg shadow-lg relative z-10" alt="{{ $post['title'] }}" onerror="this.onerror=null; this.parentElement.innerHTML='<a href=\'{{ $gdriveUrl }}\' target=\'_blank\' class=\'flex flex-col items-center gap-3 text-white hover:text-blue-300 transition z-20\'><svg class=\'w-16 h-16\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14\'></path></svg><span class=\'text-xl font-bold\'>Buka File Eksternal</span></a><p class=\'absolute bottom-4 text-xs text-slate-400 z-20\'>Thumbnail tidak bisa dimuat secara langsung, silakan buka link.</p>';">
+                            </div>
+                        @else
+                            <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 bg-blue-50 aspect-video group select-none flex items-center justify-center border border-blue-200">
+                                <a href="{{ $gdriveUrl }}" target="_blank" class="flex flex-col items-center gap-3 text-blue-600 hover:text-blue-800 transition">
+                                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                    <span class="text-xl font-bold">Buka Link Dokumen/Google Drive Karya</span>
+                                </a>
                             </div>
                         @endif
                     @endif
+
                 </div>
+
+                {{-- 5. Content / Description --}}
+                <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100">
+                    <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
+                        <span class="w-1.5 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></span>
+                        Deskripsi Karya
+                    </h3>
+                    <div class="prose prose-lg prose-slate prose-blue max-w-none text-slate-600 leading-relaxed prose-img:rounded-xl">
+                        <div class="whitespace-pre-line">{!! $post['caption'] ?? 'Penulis belum menambahkan deskripsi detail untuk karya ini.' !!}</div>
+                    </div>
+                </div>
+
+                {{-- YouTube Video --}}
+                @if(!empty($post['url_youtube']))
+                    @php
+                        preg_match('/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=|shorts\/)|youtu\.be\/)([\w-]{11})/i', $post['url_youtube'], $matches);
+                        $videoId = $matches[1] ?? null;
+                    @endphp
+                    @if($videoId)
+                        <div class="rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 border-4 border-white bg-black aspect-video relative z-0 mb-8">
+                            <iframe class="w-full h-full" src="https://www.youtube.com/embed/{{ $videoId }}" frameborder="0" allowfullscreen></iframe>
+                        </div>
+                    @endif
+                @endif
 
                 {{-- 3. Action Bar (Sticky Mobile) --}}
                 <div class="sticky top-20 z-30 lg:static bg-white/80 backdrop-blur-lg lg:bg-transparent lg:backdrop-blur-none border-y border-slate-200 lg:border-0 py-3 lg:py-0 px-4 -mx-4 lg:mx-0 lg:px-0">
@@ -251,16 +342,6 @@
                 </div>
                 @endif
 
-                {{-- 5. Content / Description --}}
-                <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100">
-                    <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                        <span class="w-1.5 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></span>
-                        Deskripsi Karya
-                    </h3>
-                    <div class="prose prose-lg prose-slate prose-blue max-w-none text-slate-600 leading-relaxed prose-img:rounded-xl">
-                        <p class="whitespace-pre-line">{{ $post['caption'] ?? 'Penulis belum menambahkan deskripsi detail untuk karya ini.' }}</p>
-                    </div>
-                </div>
 
                 {{-- 5. Comments Section --}}
                 <div id="comments" class="pt-8">

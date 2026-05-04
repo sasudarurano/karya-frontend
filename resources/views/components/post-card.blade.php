@@ -3,7 +3,28 @@
 @php
     // --- 1. LOGIKA GAMBAR UTAMA ---
     $imageUrl = null;
-    if (!empty($post['attachments']) && count($post['attachments']) > 0) {
+    
+    // Cek media folder GDrive
+    if (!empty($post['gdrive_folder_items']) && count($post['gdrive_folder_items']) > 0) {
+        foreach ($post['gdrive_folder_items'] as $item) {
+            if (str_contains($item['mimeType'] ?? '', 'image') && !empty($item['thumbnailLink'])) {
+                $imageUrl = str_replace('=s220', '=w800', $item['thumbnailLink']);
+                break;
+            }
+        }
+    }
+
+    // Cek link file tunggal GDrive
+    if (!$imageUrl && !empty($post['gdrive_url'])) {
+        $gdriveUrl = $post['gdrive_url'];
+        if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+            $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+        } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+            $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+        }
+    }
+    
+    if (!$imageUrl && !empty($post['attachments']) && count($post['attachments']) > 0) {
         $firstFile = $post['attachments'][0];
         if (str_contains($firstFile['mime'] ?? '', 'image')) {
             $rawUrl = $firstFile['file_url'] ?? ('public/uploads/' . ($firstFile['filename'] ?? ''));
@@ -85,7 +106,7 @@
 
         {{-- Caption / Excerpt --}}
         <p class="text-sm text-slate-500 line-clamp-2 leading-relaxed mb-6 flex-1">
-            {{ $post['caption'] ?? 'Tidak ada deskripsi singkat untuk karya ini.' }}
+            {{ strip_tags($post['caption'] ?? 'Tidak ada deskripsi singkat untuk karya ini.') }}
         </p>
 
         {{-- Footer: Author & Stats --}}

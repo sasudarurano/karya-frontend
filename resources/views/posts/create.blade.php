@@ -104,9 +104,9 @@
                             options: @js($users), 
                             value: '{{ old('supervisor_id') }}', 
                             placeholder: 'Cari nama dosen...',
-                            emptyText: 'Tidak ada dosen' 
-                        }}
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosen <span class="text-gray-400 text-xs"></label>
+                            emptyText: 'Tidak ada dosen pembimbing' 
+                        })">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dosen Pembimbing <span class="text-gray-400 text-xs">(Opsional)</span></label>
                         <input type="hidden" name="supervisor_id" :value="selected || ''">
                         
                         <div class="relative" @click.away="open = false">
@@ -218,40 +218,13 @@
             <div class="space-y-8">
                 <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-100 pb-2">Lampiran File</h3>
 
-                {{-- Upload Gambar --}}
-                <div x-data="imageUploader()">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Dokumentasi Karya (Screenshoot,Foto Kreator,dll) <span class="text-red-500">*</span>
-                        <span class="text-xs text-gray-400 font-normal ml-1">(Maksimal 5 gambar)</span>
+                {{-- Upload Gdrive URL --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">
+                        Link Dokumen / Gambar Karya (Google Drive) 
                     </label>
-
-                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl bg-gray-50 hover:bg-blue-50 transition relative group cursor-pointer"
-                         @click="document.getElementById('imgInput').click()">
-                        <div class="space-y-1 text-center">
-                            <div class="mx-auto h-12 w-12 text-gray-400 group-hover:text-blue-500 transition">📸</div>
-                            <div class="text-sm text-gray-600">
-                                <span class="font-medium text-blue-600 hover:text-blue-500">Klik untuk upload</span>
-                            </div>
-                            <p class="text-xs text-gray-500">PNG, JPG, WebP (Max 5 File)</p>
-                        </div>
-                        <input id="imgInput" type="file" name="post_images[]" multiple accept="image/png,image/jpeg,image/webp" class="hidden" @change="handleImages">
-                    </div>
-
-                    <div x-show="images.length > 0" class="mt-4" style="display: none;">
-                        <div class="relative bg-gray-900 rounded-xl overflow-hidden shadow-lg h-64 flex items-center justify-center">
-                            <template x-for="(img, index) in images" :key="index">
-                                <div x-show="currentIndex === index" class="absolute inset-0 flex items-center justify-center">
-                                    <img :src="img.url" class="h-full w-auto object-contain">
-                                </div>
-                            </template>
-                            <div class="absolute bottom-0 inset-x-0 bg-black/60 p-3 flex justify-between items-center text-white backdrop-blur-sm">
-                                <span class="text-xs font-mono" x-text="(currentIndex + 1) + ' / ' + images.length"></span>
-                                <button type="button" @click="removeCurrent()" class="text-xs bg-red-500 hover:bg-red-600 px-2 py-1 rounded">Hapus</button>
-                            </div>
-                            <button type="button" x-show="images.length > 1" @click="prev()" class="absolute left-2 text-white text-2xl">◀</button>
-                            <button type="button" x-show="images.length > 1" @click="next()" class="absolute right-2 text-white text-2xl">▶</button>
-                        </div>
-                    </div>
+                    <input type="url" name="gdrive_url" value="{{ old('gdrive_url') }}" placeholder="https://drive.google.com/..." class="w-full border-gray-300 rounded-xl px-4 py-3 focus:ring-blue-500">
+                    <p class="text-xs text-gray-500 mt-1">Pastikan akses link diubah ke "Anyone with the link"</p>
                 </div>
 
                 {{-- Upload PDF HKI --}}
@@ -336,35 +309,6 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 
-    // 2. Logic Image Uploader
-    Alpine.data('imageUploader', () => ({
-        images: [],
-        currentIndex: 0,
-        handleImages(e) {
-            const newFiles = Array.from(e.target.files);
-            if (this.images.length + newFiles.length > 5) {
-                alert('Maksimal 5 gambar!');
-                e.target.value = '';
-                return;
-            }
-            newFiles.forEach(file => {
-                this.images.push({ file: file, url: URL.createObjectURL(file) });
-            });
-            this.syncInput();
-        },
-        removeCurrent() {
-            this.images.splice(this.currentIndex, 1);
-            if (this.currentIndex >= this.images.length) this.currentIndex = Math.max(0, this.images.length - 1);
-            this.syncInput();
-        },
-        syncInput() {
-            const dt = new DataTransfer();
-            this.images.forEach(img => dt.items.add(img.file));
-            document.getElementById('imgInput').files = dt.files;
-        },
-        prev() { this.currentIndex = (this.currentIndex > 0) ? this.currentIndex - 1 : this.images.length - 1; },
-        next() { this.currentIndex = (this.currentIndex < this.images.length - 1) ? this.currentIndex + 1 : 0; }
-    }));
 
     // 3. Logic Document Uploader
     Alpine.data('docUploader', () => ({
@@ -401,12 +345,10 @@ document.addEventListener('alpine:init', () => {
                     console.log(`  ${key}: ${value}`);
                 }
                 
-                // Check if images are present
-                const imageFiles = formData.getAll('post_images[]');
-                console.log(`Images count: ${imageFiles.length}`);
-                if (imageFiles.length === 0) {
-                    console.error('ERROR: No images selected!');
-                    alert('Error: Anda harus memilih minimal 1 gambar!');
+                // Validate gdrive_url if needed
+                const gdriveUrl = formData.get('gdrive_url');
+                if (gdriveUrl && !gdriveUrl.startsWith('http')) {
+                    alert('Error: URL Google Drive tidak valid!');
                     e.preventDefault();
                     return false;
                 }

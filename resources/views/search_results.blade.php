@@ -35,10 +35,34 @@
     </div>
     @endif
 
+    {{-- Hasil Pencarian Pengguna --}}
+    @if(isset($users) && count($users) > 0)
+    <div class="mb-10">
+        <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+            <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+            Pengguna yang Relevan
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            @foreach($users as $user)
+            <a href="{{ route('profile.show', $user['id']) }}" class="flex items-center p-4 bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 transition duration-300 transform hover:-translate-y-1">
+                <img src="https://ui-avatars.com/api/?name={{ urlencode($user['full_name']) }}&background=0D8ABC&color=fff&size=64&bold=true" class="w-12 h-12 rounded-full mr-4 shadow-sm" alt="{{ $user['full_name'] }}">
+                <div class="overflow-hidden">
+                    <p class="font-bold text-gray-900 truncate">{{ $user['full_name'] }}</p>
+                    <p class="text-sm text-blue-500 font-medium truncate">{{ '@' . $user['username'] }}</p>
+                </div>
+                <div class="ml-auto pl-2">
+                    <svg class="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                </div>
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     @if(count($searchResults) > 0)
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             @foreach($searchResults as $post)
-                <div class="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group flex flex-col h-full">
+                <div class="bg-white rounded-3xl shadow-md hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden group flex flex-col h-full relative">
                     {{-- Thumbnail Karya --}}
                     <div class="relative h-56 overflow-hidden bg-gray-200">
                         @php
@@ -70,8 +94,8 @@
 
                     {{-- Konten Kartu --}}
                     <div class="p-6 flex flex-col flex-grow">
-                        <a href="{{ route('posts.show', $post['id']) }}" class="block mb-2">
-                            <h3 class="text-lg font-bold text-gray-900 line-clamp-2 hover:text-blue-600 transition h-14">
+                        <a href="{{ route('posts.show', $post['id']) }}" class="block mb-2 before:absolute before:inset-0 before:z-10">
+                            <h3 class="text-lg font-bold text-gray-900 line-clamp-2 hover:text-blue-600 transition h-14 relative z-0">
                                 {{ $post['title'] }}
                             </h3>
                         </a>
@@ -109,14 +133,14 @@
                                     data-post-id="{{ $post['id'] }}"
                                     data-post-like-button="{{ $post['id'] }}"
                                     data-liked="{{ ($post['isLiked'] ?? false) ? 'true' : 'false' }}" 
-                                    class="flex items-center transition {{ ($post['isLiked'] ?? false) ? 'text-red-500' : 'text-gray-400 hover:text-red-500' }}">>
+                                    class="flex items-center transition relative z-20 cursor-pointer {{ ($post['isLiked'] ?? false) ? 'text-red-500' : 'text-gray-400 hover:text-red-500' }}">
                                 <svg class="w-3.5 h-3.5 mr-1 transition" fill="{{ ($post['isLiked'] ?? false) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                                 </svg>
                                 <span class="text-[10px] font-bold like-count-{{ $post['id'] }}">{{ $post['likeCount'] ?? 0 }}</span>
                             </button>
                             @else
-                            <a href="{{ route('login') }}" class="flex items-center text-gray-400 hover:text-red-500 transition">
+                            <a href="{{ route('login') }}" class="flex items-center text-gray-400 hover:text-red-500 transition relative z-20">
                                 <svg class="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
                                 </svg>
@@ -154,10 +178,5 @@ window.globalApiBase = @json(rtrim(env('BACKEND_API_URL', 'http://localhost:3000
 window.globalApiToken = @json(Session::get('api_token', ''));
 
 // Note: toggleLikeSearch is now handled by like-manager.js
-</script>
-        }
-    })
-    .catch(error => console.error('Error:', error));
-}
 </script>
 @endsection
