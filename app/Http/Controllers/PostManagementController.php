@@ -36,12 +36,12 @@ class PostManagementController extends Controller
                 return back()->with('error', 'Anda tidak memiliki akses untuk mengedit karya ini.');
             }
 
-            // Mengambil daftar user untuk pilihan kontributor/tim/supervisor
-            $token = session('api_token');
-            $usersResponse = $this->api->getUsersList($token);
-            $users = $usersResponse->successful() ? ($usersResponse->json()['data'] ?? []) : [];
+            // Mengambil daftar user untuk pilihan kontributor/tim/supervisor dari API eksternal
+            $externalData = $this->getExternalLecturersAndStudents();
+            $lecturers = $externalData['lecturers'];
+            $students = $externalData['students'];
 
-            return view('posts.edit', compact('post', 'users'));
+            return view('posts.edit', compact('post', 'lecturers', 'students'));
         } catch (\Exception $e) {
             Log::error("Post edit view error: " . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan.');
@@ -185,7 +185,64 @@ class PostManagementController extends Controller
             return back()->with('error', $response->json()['message'] ?? 'Gagal menghapus karya.');
         } catch (\Exception $e) {
             Log::error("Post delete error: " . $e->getMessage());
-            return back()->with('error', 'Terjadi kesalahan saat menghapus karya.');
+    }
+
+    /**
+     * Get lecturers and students from external API with caching
+     */
+    private function getExternalLecturersAndStudents()
+    {
+        $lecturers = \Illuminate\Support\Facades\Cache::get('external_lecturers');
+        if (!$lecturers) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->get('https://apps2.mdp.ac.id/sipenamas/lppm/lookup');
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $list = [];
+                    foreach (($data['message'] ?? []) as $item) {
+                        $list[] = [
+                            'id' => $item['id'],
+                            'full_name' => preg_replace('/\s*\([^)]*\)$/', '', $item['value']),
+                            'username' => '',
+                        ];
+                    }
+                    if (!empty($list)) {
+                        \Illuminate\Support\Facades\Cache::put('external_lecturers', $list, 86400);
+                        $lecturers = $list;
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to fetch external lecturers: " . $e->getMessage());
+            }
         }
+
+        $students = \Illuminate\Support\Facades\Cache::get('external_students');
+        if (!$students) {
+            try {
+                $response = \Illuminate\Support\Facades\Http::withoutVerifying()->timeout(15)->get('https://apps2.mdp.ac.id/sipenamas/lppm/lookupmhs');
+                if ($response->successful()) {
+                    $data = $response->json();
+                    $list = [];
+                    foreach (($data['message'] ?? []) as $item) {
+                        $list[] = [
+                            'id' => $item['id'],
+                            'full_name' => $item['value'],
+                            'username' => $item['id'],
+                        ];
+                    }
+                    if (!empty($list)) {
+                        \Illuminate\Support\Facades\Cache::put('external_students', $list, 86400);
+                        $students = $list;
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error("Failed to fetch external students: " . $e->getMessage());
+            }
+        }
+
+        return [
+            'lecturers' => $lecturers ?? [],
+            'students' => $students ?? [],
+        ];
     }
 }

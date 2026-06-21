@@ -75,7 +75,7 @@
                     </div>
 
                     <div class="col-span-2" x-data="searchableSelect({ 
-                            options: @js(array_values($users ?? [])), 
+                            options: @js($lecturers), 
                             value: '{{ old('supervisor_id', $post['supervisor_id'] ?? '') }}', 
                             placeholder: 'Cari nama dosen...',
                             emptyText: 'Tidak ada dosen pembimbing' 
@@ -98,7 +98,7 @@
                                 <template x-for="item in filteredOptions" :key="item.id">
                                     <div @click="select(item.id)" class="px-4 py-2 hover:bg-blue-50 cursor-pointer">
                                         <div class="text-sm font-medium text-gray-800" x-text="item.full_name"></div>
-                                        <div class="text-xs text-gray-500" x-text="item.username"></div>
+                                        <div class="text-xs text-gray-500" x-show="item.username" x-text="item.username"></div>
                                     </div>
                                 </template>
                                 <div x-show="filteredOptions.length === 0" class="px-4 py-2 text-sm text-gray-500 text-center">Tidak ditemukan</div>
@@ -118,7 +118,7 @@
                 
                 <div x-data="{ 
                         contributors: [],
-                        allUsers: @js(array_values($users ?? [])),
+                        allUsers: @js($students),
                         init() {
                             // Load existing contributors
                             const existing = @js($post['contributors'] ?? []);
@@ -155,7 +155,7 @@
                                         <template x-for="item in filteredOptions" :key="item.id">
                                             <div @click="select(item.id)" class="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-50 last:border-0">
                                                 <div class="text-sm font-medium" x-text="item.full_name"></div>
-                                                <div class="text-xs text-gray-400" x-text="item.username"></div>
+                                                <div class="text-xs text-gray-400" x-show="item.username" x-text="item.username"></div>
                                             </div>
                                         </template>
                                         <div x-show="filteredOptions.length === 0" class="px-3 py-2 text-sm text-gray-500 text-center">Tidak ditemukan</div>
