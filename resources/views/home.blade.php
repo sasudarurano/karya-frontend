@@ -1,174 +1,342 @@
 @extends('layouts.app')
 
+@section('title', 'Beranda')
+@section('full_width', true)
+
 @section('content')
+@php
+    $allFeaturedPosts = collect($popularPosts ?? [])->merge($newestPosts ?? [])->unique('id')->values();
 
-{{-- Hero Section dengan Background Modern --}}
-<div class="relative bg-slate-900 rounded-[2.5rem] overflow-hidden shadow-2xl shadow-slate-200/50 mb-16 isolate">
-    {{-- Decorative Background Elements --}}
-    <div class="absolute inset-0 bg-gradient-to-br from-indigo-900/40 via-slate-900 to-slate-900 z-0"></div>
-    <div class="absolute top-0 right-0 -mt-20 -mr-20 w-96 h-96 bg-blue-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob"></div>
-    <div class="absolute bottom-0 left-0 -mb-20 -ml-20 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-blob animation-delay-2000"></div>
-    <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#ffffff 1px, transparent 1px); background-size: 24px 24px;"></div>
-    
-    <div class="relative px-6 py-24 md:py-28 text-center z-10 max-w-5xl mx-auto">
-        {{-- Badge --}}
-        <div class="inline-flex items-center gap-2 py-1.5 px-4 rounded-full bg-slate-800/50 border border-slate-700 backdrop-blur-md text-blue-300 text-xs font-bold uppercase tracking-wider mb-8 shadow-lg">
-            <span class="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-            Platform Karya Mahasiswa UMDP
-        </div>
+    $imageFor = function ($post, $size = 'w1200') {
+        if (!$post) return null;
 
-        {{-- Headline --}}
-        <h1 class="text-5xl md:text-7xl font-black text-white mb-6 tracking-tight leading-tight">
-            Tunjukkan Karyamu, <br class="hidden md:block" />
-            <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-cyan-300 to-emerald-300">
-                Inspirasi Dunia.
-            </span>
-        </h1>
-        
-        <p class="text-slate-300 text-lg md:text-xl max-w-2xl mx-auto mb-12 font-light leading-relaxed">
-            Eksplorasi ribuan inovasi, tugas akhir, dan proyek kreatif dari talenta terbaik Universitas Multi Data Palembang dalam satu wadah.
-        </p>
+        if (!empty($post['attachments'])) {
+            foreach ($post['attachments'] as $file) {
+                if (str_contains($file['mime'] ?? '', 'image')) {
+                    $rawUrl = $file['file_url'] ?? ('public/uploads/' . ($file['filename'] ?? ''));
+                    $cleanPath = str_replace('\\', '/', $rawUrl);
+                    return str_starts_with($cleanPath, 'http')
+                        ? $cleanPath
+                        : rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/') . '/' . ltrim($cleanPath, '/');
+                }
+            }
+        }
 
-        {{-- Search Form --}}
-        <form action="{{ route('home') }}" method="GET" class="max-w-3xl mx-auto relative group mb-10">
-            <div class="absolute -inset-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-500"></div>
-            <div class="relative flex items-center bg-white rounded-2xl shadow-2xl p-2">
-                <div class="pl-4 text-slate-400">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                </div>
-                <input type="text" name="search" placeholder="Cari judul skripsi, nama dosen, atau topik..." 
-                       value="{{ request('search') }}"
-                       class="w-full px-4 py-3 bg-transparent border-none focus:ring-0 text-slate-800 placeholder-slate-400 text-lg rounded-xl">
-                <button type="submit" class="hidden md:block bg-slate-900 text-white px-8 py-3 rounded-xl font-bold hover:bg-blue-600 transition-all duration-300 shadow-lg hover:shadow-blue-500/30">
-                    Cari Karya
-                </button>
-            </div>
-        </form>
+        if (!empty($post['gdrive_folder_items'])) {
+            foreach ($post['gdrive_folder_items'] as $item) {
+                if (str_contains($item['mimeType'] ?? '', 'image') && !empty($item['thumbnailLink'])) {
+                    return str_replace('=s220', '=' . $size, $item['thumbnailLink']);
+                }
+            }
+        }
 
-        {{-- Quick Filters / Tags --}}
-        <div class="flex flex-wrap justify-center items-center gap-3">
-            <span class="text-slate-400 text-sm font-medium mr-1">Sedang Tren:</span>
+        if (!empty($post['gdrive_url'])) {
+            if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $post['gdrive_url'], $m)) {
+                return 'https://drive.google.com/thumbnail?id=' . $m[1] . '&sz=' . $size;
+            }
+            if (preg_match('/id=([a-zA-Z0-9_-]+)/', $post['gdrive_url'], $m)) {
+                return 'https://drive.google.com/thumbnail?id=' . $m[1] . '&sz=' . $size;
+            }
+        }
+
+        return null;
+    };
+
+    $categories = [
+        ['label' => 'Semua', 'href' => route('home')],
+        ['label' => 'Populer', 'href' => route('home', ['sort' => 'popular'])],
+        ['label' => 'Terbaru', 'href' => route('home', ['sort' => 'newest'])],
+        ['label' => 'Magang', 'href' => route('home', ['category' => 'kp/magang'])],
+        ['label' => 'Penelitian', 'href' => route('home', ['category' => 'penelitian/pkm'])],
+        ['label' => 'Lomba', 'href' => route('home', ['category' => 'lomba'])],
+        ['label' => 'Proyek', 'href' => route('home', ['category' => 'project mandiri'])],
+        ['label' => 'Skripsi', 'href' => route('home', ['category' => 'skripsi'])],
+    ];
+
+    $heroSlides = collect([
+        [
+            'label' => 'Terbaru',
+            'headline' => 'Baru Dipublikasikan',
+            'description' => 'Karya terbaru yang baru masuk ke etalase mahasiswa UMDP.',
+            'post' => collect($newestPosts ?? [])->first(),
+        ],
+        [
+            'label' => 'Banyak Like',
+            'headline' => 'Paling Disukai',
+            'description' => 'Karya dengan dukungan like paling tinggi dari pengunjung.',
+            'post' => $allFeaturedPosts->sortByDesc(fn ($post) => (int) ($post['likeCount'] ?? 0))->first(),
+        ],
+        [
+            'label' => 'Banyak Komentar',
+            'headline' => 'Ramai Diskusi',
+            'description' => 'Karya yang paling banyak mendapatkan komentar dan percakapan.',
+            'post' => $allFeaturedPosts->sortByDesc(fn ($post) => (int) ($post['commentCount'] ?? 0))->first(),
+        ],
+    ])->filter(fn ($slide) => !empty($slide['post']))->values();
+
+    if ($heroSlides->isEmpty()) {
+        $heroSlides = collect([[
+            'label' => 'Karya Pilihan',
+            'headline' => 'Karya Mahasiswa UMDP',
+            'description' => 'Temukan inovasi, riset, proyek kreatif, dan portofolio digital mahasiswa Universitas Multi Data Palembang.',
+            'post' => null,
+        ]]);
+    }
+    $firstHeroPost = $heroSlides->first()['post'] ?? null;
+@endphp
+
+<section class="relative min-h-[640px] overflow-hidden bg-white" data-hero-carousel>
+    <div class="flex min-h-[640px] scroll-smooth transition-transform duration-700 ease-out" data-hero-track>
+        @foreach($heroSlides as $slide)
             @php
-                $categories = [
-                    ['label' => '🏢 Magang', 'val' => 'kp/magang'],
-                    ['label' => '🔬 Penelitian', 'val' => 'penelitian/pkm'],
-                    ['label' => '🏆 Lomba', 'val' => 'lomba'],
-                    ['label' => '🚀 Proyek', 'val' => 'project mandiri']
-                ];
+                $heroPost = $slide['post'];
+                $heroImage = $imageFor($heroPost, 'w1600');
             @endphp
-            @foreach($categories as $cat)
-                <a href="{{ route('home', ['category' => $cat['val']]) }}" 
-                   class="px-4 py-1.5 rounded-full bg-slate-800/40 text-slate-300 hover:bg-blue-500 hover:text-white border border-slate-700 hover:border-blue-400 transition-all duration-300 text-sm font-medium backdrop-blur-sm">
-                    {{ $cat['label'] }}
-                </a>
-            @endforeach
+            <article class="relative min-h-[640px] min-w-full overflow-hidden bg-white">
+                @if($heroImage)
+                    <img src="{{ $heroImage }}" alt="{{ $heroPost['title'] ?? 'Karya Mahasiswa' }}" class="absolute inset-0 h-full w-full object-cover object-center">
+                    <div class="absolute inset-0 bg-gradient-to-r from-white via-white/92 to-white/20"></div>
+                    <div class="absolute inset-0 bg-gradient-to-t from-white via-white/25 to-transparent"></div>
+                @else
+                    <div class="absolute inset-0 bg-[linear-gradient(135deg,#fff_0%,#f8fafc_45%,#fee2e2_100%)]"></div>
+                @endif
+
+                <div class="relative mx-auto flex min-h-[500px] max-w-7xl items-center px-4 py-16 sm:px-6 lg:px-8">
+                    <div class="max-w-2xl">
+                        <div class="mb-5 inline-flex items-center rounded-md bg-red-600 px-4 py-2 text-xs font-black uppercase tracking-wide text-white shadow-lg shadow-red-600/20">
+                            {{ $slide['label'] }}
+                        </div>
+
+                        <p class="mb-3 text-sm font-semibold italic text-slate-500">{{ $slide['description'] }}</p>
+
+                        <h1 class="mb-4 text-4xl font-black leading-tight text-slate-950 sm:text-6xl">
+                            {{ $heroPost['title'] ?? $slide['headline'] }}
+                        </h1>
+
+                        <div class="mb-5 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm font-semibold text-slate-500">
+                            <span class="inline-flex items-center gap-1 text-amber-500">
+                                <svg class="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M10 1.5l2.47 5.32 5.82.7-4.3 3.98 1.14 5.75L10 14.38l-5.13 2.87 1.14-5.75-4.3-3.98 5.82-.7L10 1.5z"/></svg>
+                                {{ $heroPost['likeCount'] ?? 0 }}
+                            </span>
+                            <span class="inline-flex items-center gap-1 text-slate-500">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                                {{ $heroPost['commentCount'] ?? 0 }}
+                            </span>
+                            <span>{{ isset($heroPost['created_at']) ? \Carbon\Carbon::parse($heroPost['created_at'])->format('Y') : now()->format('Y') }}</span>
+                            <span>{{ $heroPost['category'] ?? 'Karya Mahasiswa' }}</span>
+                            <span>{{ $heroPost['author']['full_name'] ?? 'Universitas Multi Data Palembang' }}</span>
+                        </div>
+
+                        <p class="max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+                            {{ \Illuminate\Support\Str::limit(strip_tags($heroPost['caption'] ?? 'Temukan inovasi, riset, proyek kreatif, dan portofolio digital mahasiswa Universitas Multi Data Palembang.'), 210) }}
+                        </p>
+                    </div>
+                </div>
+            </article>
+        @endforeach
+    </div>
+
+    <div class="pointer-events-none absolute inset-x-0 top-[440px] z-20">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="pointer-events-auto flex max-w-3xl flex-wrap items-center gap-3">
+                @if($firstHeroPost)
+                    <a href="{{ route('posts.show', $firstHeroPost['id']) }}" data-hero-action class="inline-flex items-center gap-3 rounded-lg bg-red-600 px-6 py-3 text-base font-black text-white shadow-lg shadow-red-600/20 transition hover:bg-red-700">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M5 3l14 9-14 9V3z"/></svg>
+                        Lihat Karya
+                    </a>
+                @endif
+                <form action="{{ route('home') }}" method="GET" class="flex min-w-0 flex-1 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm sm:max-w-sm">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari karya..." class="min-w-0 flex-1 px-4 py-3 text-sm text-slate-900 outline-none placeholder:text-slate-400">
+                    <button class="bg-slate-950 px-4 font-bold text-white transition hover:bg-slate-800" type="submit">
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-4.35-4.35m1.35-5.15a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
-</div>
 
-<div class="space-y-20">
-    
-    {{-- Section: Paling Populer --}}
-    <section>
-        <div class="flex items-end justify-between mb-10 px-2">
-            <div>
-                <h2 class="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-orange-100 text-orange-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" /></svg>
-                    </span>
-                    Paling Populer
-                </h2>
-                <p class="text-slate-500 mt-2 ml-14 text-sm font-medium">Karya yang paling banyak dilihat dan disukai bulan ini.</p>
+    <div class="pointer-events-none absolute inset-x-0 top-[540px] z-20">
+        <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div class="pointer-events-auto flex max-w-3xl gap-2 overflow-x-auto pb-2 scrollbar-none">
+                @foreach($categories as $category)
+                    <a href="{{ $category['href'] }}" class="shrink-0 rounded-full border border-slate-200 bg-white/85 px-4 py-2 text-sm font-bold text-slate-700 shadow-sm backdrop-blur transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                        {{ $category['label'] }}
+                    </a>
+                @endforeach
             </div>
-            <a href="{{ route('home', ['sort' => 'popular']) }}" class="group flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">
-                Lihat Semua
-                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-            </a>
+        </div>
+    </div>
+
+    @if($heroSlides->count() > 1)
+        <div class="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-slate-200 bg-white/90 p-1 shadow-lg backdrop-blur">
+            @foreach($heroSlides as $slide)
+                <button type="button" data-hero-jump="{{ $loop->index }}" data-hero-url="{{ !empty($slide['post']) ? route('posts.show', $slide['post']['id']) : '' }}" class="rounded-full px-4 py-2 text-xs font-black text-slate-500 transition hover:text-red-600 {{ $loop->first ? 'bg-slate-950 text-white hover:text-white' : '' }}">
+                    {{ $slide['label'] }}
+                </button>
+            @endforeach
+        </div>
+    @endif
+</section>
+
+<div class="mx-auto max-w-7xl space-y-12 px-4 pb-16 sm:px-6 lg:px-8">
+    <section>
+        <div class="mb-5 flex items-center justify-between gap-4">
+            <h2 class="text-2xl font-black text-slate-950">Trending Now</h2>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('home', ['sort' => 'popular']) }}" class="hidden text-sm font-black text-red-600 hover:text-red-700 sm:inline-flex">Lihat Semua</a>
+                <div class="hidden rounded-full border border-slate-200 bg-slate-100 p-1 md:flex">
+                    <a href="{{ route('home') }}" class="rounded-full bg-white px-5 py-2 text-sm font-black text-slate-950 shadow-sm">All</a>
+                    <a href="{{ route('home', ['sort' => 'popular']) }}" class="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-950">Populer</a>
+                    <a href="{{ route('home', ['sort' => 'newest']) }}" class="px-5 py-2 text-sm font-bold text-slate-500 hover:text-slate-950">Terbaru</a>
+                </div>
+                <button type="button" data-scroll-target="trending-row" data-scroll-dir="-1" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label="Scroll trending ke kiri">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" data-scroll-target="trending-row" data-scroll-dir="1" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label="Scroll trending ke kanan">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
         </div>
 
         @if(!empty($popularPosts) && count($popularPosts) > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div id="trending-row" data-auto-row class="-mx-4 flex scroll-smooth gap-4 overflow-x-auto px-4 pb-3 scrollbar-none sm:mx-0 sm:px-0">
                 @foreach($popularPosts as $post)
-                    <x-post-card :post="$post" />
+                    <x-post-card :post="$post" variant="poster" :rank="$loop->iteration" />
                 @endforeach
             </div>
         @else
-            <div class="flex flex-col items-center justify-center py-16 px-4 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
-                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-400">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-                </div>
-                <h3 class="text-lg font-bold text-slate-700">Belum ada yang populer</h3>
-                <p class="text-slate-500 max-w-sm mt-1">Jadilah yang pertama membuat karya hebat dan populerkan karyamu!</p>
+            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+                <h3 class="font-black text-slate-800">Belum ada karya populer</h3>
+                <p class="mt-1 text-sm text-slate-500">Karya yang paling banyak mendapat interaksi akan tampil di sini.</p>
             </div>
         @endif
     </section>
 
-    {{-- Section: Baru Diupload --}}
     <section>
-        <div class="flex items-end justify-between mb-10 px-2">
-            <div>
-                <h2 class="text-3xl font-bold text-slate-900 tracking-tight flex items-center gap-3">
-                    <span class="flex items-center justify-center w-10 h-10 rounded-xl bg-blue-100 text-blue-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" /></svg>
-                    </span>
-                    Terbaru
-                </h2>
-                <p class="text-slate-500 mt-2 ml-14 text-sm font-medium">Inovasi fresh yang baru saja diunggah mahasiswa.</p>
+        <div class="mb-5 flex items-center justify-between gap-4">
+            <h2 class="text-2xl font-black text-slate-950">New Release</h2>
+            <div class="flex items-center gap-2">
+                <a href="{{ route('home', ['sort' => 'newest']) }}" class="hidden text-sm font-black text-red-600 hover:text-red-700 sm:inline-flex">Lihat Semua</a>
+                <button type="button" data-scroll-target="new-release-row" data-scroll-dir="-1" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label="Scroll new release ke kiri">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <button type="button" data-scroll-target="new-release-row" data-scroll-dir="1" class="inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-800 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-600" aria-label="Scroll new release ke kanan">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M9 5l7 7-7 7"/></svg>
+                </button>
             </div>
-            <a href="{{ route('home', ['sort' => 'newest']) }}" class="group flex items-center gap-1 text-sm font-bold text-blue-600 hover:text-blue-800 transition-colors">
-                Lihat Semua
-                <svg class="w-4 h-4 transform group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-            </a>
         </div>
 
         @if(!empty($newestPosts) && count($newestPosts) > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div id="new-release-row" data-auto-row class="-mx-4 flex scroll-smooth gap-4 overflow-x-auto px-4 pb-3 scrollbar-none sm:mx-0 sm:px-0">
                 @foreach($newestPosts as $post)
-                    <x-post-card :post="$post" />
+                    <x-post-card :post="$post" variant="poster" :rank="$loop->iteration" />
                 @endforeach
             </div>
-            </div>
         @else
-            <div class="flex flex-col items-center justify-center py-16 px-4 bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 text-center">
-                <div class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4 text-slate-400">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                </div>
-                <h3 class="text-lg font-bold text-slate-700">Belum ada karya terbaru</h3>
-                <p class="text-slate-500 max-w-sm mt-1">Saat ini belum ada karya baru yang diunggah.</p>
+            <div class="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center">
+                <h3 class="font-black text-slate-800">Belum ada karya terbaru</h3>
+                <p class="mt-1 text-sm text-slate-500">Karya terbaru yang sudah dipublikasikan akan muncul di sini.</p>
             </div>
         @endif
     </section>
 
-    {{-- CTA / Bottom Section --}}
     @if(!session('user'))
-    <section class="relative bg-blue-600 rounded-3xl overflow-hidden py-16 px-8 text-center">
-        <div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
-        <div class="relative z-10 max-w-2xl mx-auto">
-            <h2 class="text-3xl font-bold text-white mb-4">Punya Karya Hebat yang Ingin Dibagikan?</h2>
-            <p class="text-blue-100 mb-8 text-lg">Jangan biarkan karyamu hanya tersimpan di laptop. Publikasikan sekarang dan bangun portofolio digitalmu.</p>
-            <a href="{{ route('login') }}" class="inline-block bg-white text-blue-600 font-bold py-3 px-8 rounded-xl shadow-lg hover:bg-blue-50 transition transform hover:-translate-y-1">
-                Login untuk Upload
-            </a>
-        </div>
-    </section>
+        <section class="rounded-xl border border-slate-200 bg-slate-950 px-6 py-10 text-center shadow-xl">
+            <h2 class="text-2xl font-black text-white">Punya karya untuk dipublikasikan?</h2>
+            <p class="mx-auto mt-2 max-w-xl text-sm leading-6 text-slate-300">Masuk dan bangun portofolio digital mahasiswa UMDP dengan tampilan yang siap dibagikan.</p>
+            <div class="mt-6 flex flex-wrap justify-center gap-3">
+                <a href="{{ route('login') }}" class="rounded-lg bg-red-600 px-5 py-3 text-sm font-black text-white hover:bg-red-700">Login & Upload</a>
+                <a href="{{ route('register') }}" class="rounded-lg bg-white px-5 py-3 text-sm font-black text-slate-950 hover:bg-slate-100">Daftar Gratis</a>
+            </div>
+        </section>
     @endif
-
 </div>
 
-{{-- Custom CSS untuk animasi blobs --}}
 <style>
-    @keyframes blob {
-        0% { transform: translate(0px, 0px) scale(1); }
-        33% { transform: translate(30px, -50px) scale(1.1); }
-        66% { transform: translate(-20px, 20px) scale(0.9); }
-        100% { transform: translate(0px, 0px) scale(1); }
-    }
-    .animate-blob {
-        animation: blob 7s infinite;
-    }
-    .animation-delay-2000 {
-        animation-delay: 2s;
-    }
+    .scrollbar-none { scrollbar-width: none; -ms-overflow-style: none; }
+    .scrollbar-none::-webkit-scrollbar { display: none; }
 </style>
+<script>
+    const heroCarousel = document.querySelector('[data-hero-carousel]');
+    if (heroCarousel) {
+        const track = heroCarousel.querySelector('[data-hero-track]');
+        const buttons = [...heroCarousel.querySelectorAll('[data-hero-jump]')];
+        const actionLink = heroCarousel.querySelector('[data-hero-action]');
+        let heroIndex = 0;
+        const heroTotal = track ? track.children.length : 0;
 
+        const setHero = (index) => {
+            if (!track || heroTotal <= 0) return;
+            heroIndex = (index + heroTotal) % heroTotal;
+            track.style.transform = `translateX(-${heroIndex * 100}%)`;
+
+            buttons.forEach((button, buttonIndex) => {
+                const active = buttonIndex === heroIndex;
+                button.classList.toggle('bg-slate-950', active);
+                button.classList.toggle('text-white', active);
+                button.classList.toggle('hover:text-white', active);
+                button.classList.toggle('text-slate-500', !active);
+            });
+
+            if (actionLink && buttons[heroIndex]) {
+                const nextUrl = buttons[heroIndex].dataset.heroUrl;
+                if (nextUrl) {
+                    actionLink.href = nextUrl;
+                    actionLink.classList.remove('hidden');
+                } else {
+                    actionLink.classList.add('hidden');
+                }
+            }
+        };
+
+        buttons.forEach((button) => {
+            button.addEventListener('click', () => setHero(Number(button.dataset.heroJump || 0)));
+        });
+
+        if (heroTotal > 1) {
+            setInterval(() => setHero(heroIndex + 1), 5200);
+        }
+    }
+
+    document.querySelectorAll('[data-scroll-target]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const target = document.getElementById(button.dataset.scrollTarget);
+            if (!target) return;
+
+            const direction = Number(button.dataset.scrollDir || 1);
+            const amount = Math.max(260, Math.floor(target.clientWidth * 0.85));
+            const maxScroll = target.scrollWidth - target.clientWidth;
+            const nextLeft = target.scrollLeft + (direction * amount);
+
+            if (nextLeft >= maxScroll - 8) {
+                target.scrollTo({ left: 0, behavior: 'smooth' });
+                return;
+            }
+
+            if (nextLeft <= 0) {
+                target.scrollTo({ left: maxScroll, behavior: 'smooth' });
+                return;
+            }
+
+            target.scrollTo({ left: nextLeft, behavior: 'smooth' });
+        });
+    });
+
+    document.querySelectorAll('[data-auto-row]').forEach((row) => {
+        if (row.scrollWidth <= row.clientWidth) return;
+
+        setInterval(() => {
+            const maxScroll = row.scrollWidth - row.clientWidth;
+            const amount = Math.max(220, Math.floor(row.clientWidth * 0.55));
+            const nextLeft = row.scrollLeft + amount;
+
+            if (nextLeft >= maxScroll - 8) {
+                row.scrollTo({ left: 0, behavior: 'smooth' });
+                return;
+            }
+
+            row.scrollTo({ left: nextLeft, behavior: 'smooth' });
+        }, 4200);
+    });
+</script>
 @endsection

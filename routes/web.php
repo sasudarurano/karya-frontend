@@ -187,4 +187,5 @@ Route::middleware(['session.auth', \App\Http\Middleware\CheckSuperAdminRole::cla
     Route::put('/users/{id}', [AdminUserController::class, 'update'])->name('users.update');
     Route::patch('/users/{id}/change-to-verifikator', [AdminUserController::class, 'changeToVerifikator'])->name('users.change-to-verifikator');
     Route::post('/users/{id}/verify', [AdminUserController::class, 'verifyUser'])->name('users.verify');
+    Route::post('/users/{id}/deactivate', [AdminUserController::class, 'deactivateUser'])->name('users.deactivate');
 });

@@ -189,6 +189,8 @@ class PostManagementController extends Controller
             return back()->with('error', $response->json()['message'] ?? 'Gagal menghapus karya.');
         } catch (\Exception $e) {
             Log::error("Post delete error: " . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan saat menghapus karya: ' . $e->getMessage());
+        }
     }
 
     /**

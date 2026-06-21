@@ -99,12 +99,11 @@ class PostController extends Controller
         }
 
         // 3. Logika Halaman Utama (Popular & Terbaru)
-        // Fixed limit of 6 posts for each section on homepage
-        $cacheKey = "home_data_v2"; // Increment version to invalidate old paginated cache
+        $cacheKey = "home_data_v3";
         
         $homeData = Cache::remember($cacheKey, 300, function () {
-            $newestResp = $this->api->getNewestPosts(6, 1);
-            $popularResp = $this->api->getPopularPosts(6, 1);
+            $newestResp = $this->api->getNewestPosts(12, 1);
+            $popularResp = $this->api->getPopularPosts(12, 1);
 
             $newestDataRaw = $newestResp->successful() ? $newestResp->json()['data'] : [];
             $popularDataRaw = $popularResp->successful() ? $popularResp->json()['data'] : [];

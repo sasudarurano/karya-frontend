@@ -84,6 +84,13 @@
             </div>
         @endif
 
+        @if(session('error'))
+            <div class="mb-6 flex items-center p-4 bg-rose-50 border-l-4 border-rose-500 rounded-r-xl text-rose-800 shadow-sm animate-fade-in">
+                <svg class="w-5 h-5 mr-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10A8 8 0 11.001 10 8 8 0 0118 10zM8.293 5.293a1 1 0 011.414 0L10 5.586l.293-.293a1 1 0 111.414 1.414L11.414 7l.293.293a1 1 0 01-1.414 1.414L10 8.414l-.293.293A1 1 0 018.293 7.293L8.586 7l-.293-.293a1 1 0 010-1.414z" clip-rule="evenodd"></path></svg>
+                <span class="font-bold">{{ session('error') }}</span>
+            </div>
+        @endif
+
         @if(isset($error_message) && $error_message)
             <div class="mb-6 flex items-center p-4 bg-rose-50 border-l-4 border-rose-500 rounded-r-xl text-rose-800 shadow-sm">
                 <svg class="w-5 h-5 mr-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
@@ -248,6 +255,20 @@
                                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path></svg>
                                             Reset Pass
                                         </button>
+
+                                        @if(($user['id'] ?? null) !== (Session::get('user')['id'] ?? null))
+                                            <form action="{{ route('admin.users.deactivate', $user['id']) }}" method="POST" onsubmit="return confirm('Nonaktifkan user {{ $user['full_name'] ?? 'ini' }}? User akan hilang dari daftar ini dan akan otomatis dihapus jika tidak diaktifkan kembali dalam 30 hari.');">
+                                                @csrf
+                                                <button type="submit"
+                                                        class="inline-flex items-center gap-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors p-2 rounded-lg font-semibold text-sm"
+                                                        title="Nonaktifkan User">
+                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 105.636 5.636m12.728 12.728L5.636 5.636"></path>
+                                                    </svg>
+                                                    Nonaktifkan
+                                                </button>
+                                            </form>
+                                        @endif
 
                                         <!-- Role Dropdown -->
                                         <div class="relative group/dropdown">

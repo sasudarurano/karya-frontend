@@ -276,4 +276,29 @@ class AdminUserController extends Controller
 
         return back()->with('error', 'Gagal memvalidasi akun mahasiswa.');
     }
+
+    /**
+     * Nonaktifkan user. User akan disembunyikan dari daftar admin dan
+     * backend akan menghapus otomatis jika tetap nonaktif selama 30 hari.
+     */
+    public function deactivateUser($id)
+    {
+        $token = Session::get('api_token');
+
+        $response = $this->api->deactivateUser($id, $token);
+
+        if ($response->successful()) {
+            Log::info('User deactivated successfully', ['user_id' => $id]);
+            return redirect()->route('admin.users.index')
+                ->with('success', 'User berhasil dinonaktifkan. Jika tidak diaktifkan kembali dalam 30 hari, user akan otomatis dihapus.');
+        }
+
+        Log::error('Failed to deactivate user', [
+            'user_id' => $id,
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
+
+        return back()->with('error', 'Gagal menonaktifkan user: ' . ($response->json()['message'] ?? 'Error Server'));
+    }
 }

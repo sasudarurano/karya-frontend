@@ -320,6 +320,11 @@ class KaryaApi
         return $this->getClientWithToken($token)->post("{$this->baseUrl}/v1/users/{$userId}/verify");
     }
 
+    public function deactivateUser($userId, $token = null)
+    {
+        return $this->getClientWithToken($token)->patch("{$this->baseUrl}/v1/users/{$userId}/deactivate");
+    }
+
     // --- COMMENTS ---
 
     /**

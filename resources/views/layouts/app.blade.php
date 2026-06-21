@@ -1,12 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <meta name="api-base" content="{{ rtrim(env('BACKEND_API_URL', 'http://localhost:3000/api'), '/') }}">
     <meta name="api-token" content="{{ Session::get('api_token', '') }}">
-    <title>Karya Mahasiswa</title>
+    <meta name="description" content="Platform karya mahasiswa Universitas Multi Data Palembang - eksplorasi inovasi, tugas akhir, dan proyek kreatif.">
+    <title>@yield('title', 'Karya Mahasiswa') | KARYA.UMDP</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     
@@ -17,14 +21,15 @@
     </script>
     <script src="{{ asset('js/like-manager.js') }}"></script>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans antialiased">
+<body class="min-h-screen bg-white text-slate-900 antialiased" style="font-family: 'Inter', system-ui, sans-serif;">
     
-    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+    <nav class="sticky top-0 z-50 border-b border-slate-200 bg-white/90 shadow-sm backdrop-blur-md">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex">
-                    <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center font-bold text-xl text-brand-600">
-                        KARYA.UMDP
+            <div class="flex h-16 justify-between">
+                <div class="flex items-center">
+                    <a href="{{ route('home') }}" class="flex-shrink-0 flex items-center gap-2 font-extrabold text-lg text-slate-950 hover:text-red-600 transition-colors">
+                        <img src="{{ asset('storage/branding/logo1.png') }}" alt="KARYA.UMDP" class="h-8 w-8 shrink-0 object-contain">
+                        <span class="tracking-tight">KARYA<span class="text-red-600">.UMDP</span></span>
                     </a>
                 </div>
                 @php
@@ -32,24 +37,25 @@
                     $isAdminLike = in_array($role, ['admin', 'superadmin', 'verifikator', 'kaprodi', 'kemahasiswaan', 'dosen']);
                 @endphp
 
-                <div class="flex items-center space-x-4">
+                <div class="flex items-center gap-2 sm:gap-3">
                     <form action="{{ route('home') }}" method="GET" class="hidden md:block">
-                        <input type="text" name="search" placeholder="Cari karya..." class="border rounded-full px-4 py-1 text-sm bg-gray-100 focus:bg-white focus:ring-2 focus:ring-brand-500 outline-none">
+                        <input type="text" name="search" placeholder="Cari karya..." class="w-44 rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all duration-200 hover:bg-white focus:w-56 focus:border-red-500 focus:bg-white focus:ring-2 focus:ring-red-500/15">
                     </form>
 
                     @if(Session::has('api_token'))
-                        <a href="{{ route('home') }}" class="text-gray-600 hover:text-gray-900 font-medium text-sm hidden lg:block">
+                        <a href="{{ route('home') }}" class="text-slate-600 hover:text-slate-950 font-semibold text-sm hidden lg:block transition-colors">
                             Explore
                         </a>
-                        <a href="{{ route('dashboard') }}" class="text-gray-600 hover:text-gray-900 font-medium text-sm hidden lg:block">
+                        <a href="{{ route('dashboard') }}" class="text-slate-600 hover:text-slate-950 font-semibold text-sm hidden lg:block transition-colors">
                             Dashboard
                         </a>
-                        <a href="{{ route('posts.create') }}" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition">
-                            + Upload
+                        <a href="{{ route('posts.create') }}" class="inline-flex items-center gap-1.5 rounded-full bg-red-600 px-3.5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                            Upload
                         </a>
                         
                         <div x-data="{ open: false, unreadCount: 0 }" @notification-opened.window="open = true; loadNotifications()" class="relative">
-                            <button @click="open = !open; if(open) { fetchUnreadCount(); loadNotifications(); }" class="relative p-2 text-gray-600 hover:text-gray-900 transition">
+                            <button @click="open = !open; if(open) { fetchUnreadCount(); loadNotifications(); }" class="relative p-2 text-slate-500 hover:text-slate-950 transition">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path>
                                 </svg>
@@ -124,8 +130,8 @@
                             </div>
                         </div>
                     @else
-                        <a href="{{ route('login') }}" class="text-gray-600 hover:text-gray-900 font-medium">Masuk</a>
-                        <a href="{{ route('register') }}" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-brand-700 transition">
+                        <a href="{{ route('login') }}" class="text-slate-600 hover:text-slate-900 font-medium text-sm transition-colors">Masuk</a>
+                        <a href="{{ route('register') }}" class="inline-flex items-center rounded-full bg-red-600 px-3.5 py-2 text-sm font-bold text-white shadow-sm transition-colors hover:bg-red-700">
                             Daftar
                         </a>
                     @endif
@@ -134,10 +140,14 @@
         </div>
     </nav>
 
-    <main class="py-10">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <main class="@hasSection('full_width') @else py-5 md:py-7 @endif">
+        @hasSection('full_width')
             @yield('content')
-        </div>
+        @else
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                @yield('content')
+            </div>
+        @endif
     </main>
 
     <script>
