@@ -206,18 +206,45 @@
                                 {{-- Kolom 1: Gambar & Judul --}}
                                 <td class="px-6 py-5 align-top">
                                     <div class="flex gap-4">
-                                        <div class="relative h-20 w-28 flex-shrink-0 bg-slate-200 rounded-lg overflow-hidden border border-slate-200 shadow-sm">
-                                            @if(!empty($post['attachments']) && isset($post['attachments'][0]['file_url']))
-                                                @php
-                                                    $cleanPath = str_replace('\\', '/', $post['attachments'][0]['file_url']);
-                                                    if (str_starts_with($cleanPath, 'http')) {
-                                                        $imageUrl = $cleanPath;
-                                                    } else {
-                                                        $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
-                                                        $cleanPath = ltrim($cleanPath, '/');
-                                                        $imageUrl = $backendUrl . '/' . $cleanPath;
+                                        <div class="relative h-20 w-28 flex-shrink-0 bg-slate-100 rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+                                            @php
+                                                $imageUrl = null;
+
+                                                if (!empty($post['attachments']) && is_array($post['attachments'])) {
+                                                    foreach ($post['attachments'] as $attachment) {
+                                                        if (str_contains($attachment['mime'] ?? '', 'image') && !empty($attachment['file_url'])) {
+                                                            $cleanPath = str_replace('\\', '/', $attachment['file_url']);
+                                                            if (str_starts_with($cleanPath, 'http')) {
+                                                                $imageUrl = $cleanPath;
+                                                            } else {
+                                                                $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
+                                                                $imageUrl = $backendUrl . '/' . ltrim($cleanPath, '/');
+                                                            }
+                                                            break;
+                                                        }
                                                     }
-                                                @endphp
+                                                }
+
+                                                if (!$imageUrl && !empty($post['gdrive_folder_items']) && is_array($post['gdrive_folder_items'])) {
+                                                    foreach ($post['gdrive_folder_items'] as $item) {
+                                                        if (str_contains($item['mimeType'] ?? '', 'image') && !empty($item['thumbnailLink'])) {
+                                                            $imageUrl = str_replace('=s220', '=w800', $item['thumbnailLink']);
+                                                            break;
+                                                        }
+                                                    }
+                                                }
+
+                                                if (!$imageUrl && !empty($post['gdrive_url'])) {
+                                                    $gdriveUrl = $post['gdrive_url'];
+                                                    if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                                        $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+                                                    } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                                        $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+                                                    }
+                                                }
+                                            @endphp
+
+                                            @if($imageUrl)
                                                 <img src="{{ $imageUrl }}" class="h-full w-full object-cover transition duration-700 group-hover:scale-110" loading="lazy" 
                                                     onerror="this.parentElement.innerHTML='<div class=\'h-full w-full flex flex-col items-center justify-center text-slate-400 bg-slate-50\'><svg class=\'w-6 h-6 mb-1\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\'></path></svg><span class=\'text-[9px] font-bold uppercase\'>Error</span></div>'">
                                             @else

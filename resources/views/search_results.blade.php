@@ -66,20 +66,35 @@
                     {{-- Thumbnail Karya --}}
                     <div class="relative h-56 overflow-hidden bg-gray-200">
                         @php
-                            // Mengambil gambar pertama dari attachments atau placeholder jika kosong
-                            $attachment = !empty($post['attachments']) ? $post['attachments'][0] : null;
-                            $imageUrl = 'https://via.placeholder.com/600x400?text=No+Thumbnail';
-                            
-                            if ($attachment && str_contains($attachment['mime'], 'image')) {
-                                $cleanPath = str_replace('\\', '/', $attachment['file_url']);
-                                $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
-                                
-                                // Logic penentuan URL gambar (Lokal vs Remote)
-                                if (str_starts_with($cleanPath, 'http')) {
-                                    $imageUrl = $cleanPath;
-                                } else {
-                                    $imageUrl = $backendUrl . '/' . ltrim($cleanPath, '/');
+                            $imageUrl = null;
+                            if (!empty($post['attachments']) && count($post['attachments']) > 0) {
+                                foreach ($post['attachments'] as $att) {
+                                    if (str_contains($att['mime'] ?? '', 'image')) {
+                                        $cleanPath = str_replace('\\', '/', $att['file_url']);
+                                        $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
+                                        
+                                        if (str_starts_with($cleanPath, 'http')) {
+                                            $imageUrl = $cleanPath;
+                                        } else {
+                                            $imageUrl = $backendUrl . '/' . ltrim($cleanPath, '/');
+                                        }
+                                        break;
+                                    }
                                 }
+                            }
+                            
+                            // Check GDrive single file if no uploaded image
+                            if (!$imageUrl && !empty($post['gdrive_url'])) {
+                                $gdriveUrl = $post['gdrive_url'];
+                                if (preg_match('/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                    $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+                                } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
+                                    $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
+                                }
+                            }
+
+                            if (!$imageUrl) {
+                                $imageUrl = 'https://via.placeholder.com/600x400?text=No+Thumbnail';
                             }
                         @endphp
                         <img src="{{ $imageUrl }}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt="{{ $post['title'] }}">

@@ -95,7 +95,14 @@ class AdminPostController extends Controller
 
             // List kategori (bisa ambil dari konstanta atau API lain, di sini kita ambil dari data yang ada di DB secara global jika mungkin, 
             // tapi sementara kita gunakan list statis atau biarkan kosong jika API categories belum ada)
-            $availableCategories = ['PKM', 'Karya Tulis', 'Project Mandiri', 'Lainnya']; 
+            $availableCategories = [
+                'lomba',
+                'tugas kelas',
+                'ta/skripsi',
+                'kp/magang',
+                'penelitian/pkm',
+                'project mandiri',
+            ];
         } else {
             Log::error('Failed to fetch all posts for admin', [
                 'status' => $response->status(),

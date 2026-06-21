@@ -197,19 +197,7 @@ class KaryaApi
      */
     public function createPost($data, $files = [], $token = null)
     {
-        // Use provided token if available, otherwise fallback to session token
-        $request = $this->getClientWithToken($token);
-
-        // Handle Multipart (Upload File)
-        if (!empty($files)) {
-            foreach ($files as $file) {
-                $request->attach(
-                    'attachments', // Nama field harus sesuai dengan yang diharapkan backend (array 'attachments')
-                    file_get_contents($file->getRealPath()), 
-                    $file->getClientOriginalName()
-                );
-            }
-        }
+        $jwtToken = $token ?? Session::get('api_token');
 
         // Konversi boolean ke string "true"/"false" untuk multipart form-data
         // Backend Node.js akan parse string ini menjadi boolean
@@ -222,8 +210,50 @@ class KaryaApi
             $data['is_published'] = $boolValue ? 'true' : 'false';
         }
 
-        return $request->post("{$this->baseUrl}/posts", $data);
+        // Build multipart attachments array
+        $attachments = [];
+
+        // Add all regular data fields as multipart parts
+        foreach ($data as $key => $value) {
+            // Backend currently stores a single supervisor_id. Sending lecturer_ids
+            // with external lecturer identifiers makes the Node DTO reject uploads.
+            if ($key === 'lecturer_ids') {
+                continue;
+            }
+
+            if (is_array($value)) {
+                // Array fields (e.g. contributor_ids) -> send as multiple parts with same name
+                foreach ($value as $item) {
+                    if ($item !== null && $item !== '') {
+                        $attachments[] = [
+                            'name'     => $key,
+                            'contents' => (string) $item,
+                        ];
+                    }
+                }
+            } elseif ($value !== null) {
+                $attachments[] = [
+                    'name'     => $key,
+                    'contents' => (string) $value,
+                ];
+            }
+        }
+
+        // Add file attachments
+        foreach ($files as $file) {
+            $attachments[] = [
+                'name'     => 'attachments',
+                'contents' => file_get_contents($file->getRealPath()),
+                'filename' => $file->getClientOriginalName(),
+                'headers'  => ['Content-Type' => $file->getMimeType()],
+            ];
+        }
+
+        return Http::withToken($jwtToken)
+            ->asMultipart()
+            ->post("{$this->baseUrl}/posts", $attachments);
     }
+
     /**
      * Mengambil SEMUA postingan untuk Admin Moderation
      * Termasuk yang belum dipublikasikan

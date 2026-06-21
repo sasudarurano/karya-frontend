@@ -123,17 +123,8 @@
                 <div class="space-y-8">
                     @php
                         $mediaItems = [];
-                        if (!empty($post['gdrive_folder_items']) && count($post['gdrive_folder_items']) > 0) {
-                            foreach($post['gdrive_folder_items'] as $item) {
-                                if (str_contains($item['mimeType'] ?? '', 'image') || str_contains($item['mimeType'] ?? '', 'video')) {
-                                    $mediaItems[] = [
-                                        'type' => str_contains($item['mimeType'], 'image') ? 'image' : 'video',
-                                        'url' => str_contains($item['mimeType'], 'image') ? str_replace('=s220', '=w1500', $item['thumbnailLink'] ?? '') : ($item['webContentLink'] ?? ''),
-                                        'thumbnail' => $item['thumbnailLink'] ?? null
-                                    ];
-                                }
-                            }
-                        } elseif (!empty($post['attachments']) && count($post['attachments']) > 0) {
+
+                        if (!empty($post['attachments']) && count($post['attachments']) > 0) {
                             foreach($post['attachments'] as $item) {
                                 if (str_contains($item['mime'] ?? '', 'image')) {
                                     $imgUrl = getSafeUrl($item['file_url'], $backendBaseUrl);
@@ -148,6 +139,16 @@
                                         'type' => 'video',
                                         'url' => $vidUrl,
                                         'thumbnail' => null
+                                    ];
+                                }
+                            }
+                        } elseif (!empty($post['gdrive_folder_items']) && count($post['gdrive_folder_items']) > 0) {
+                            foreach($post['gdrive_folder_items'] as $item) {
+                                if (str_contains($item['mimeType'] ?? '', 'image') || str_contains($item['mimeType'] ?? '', 'video')) {
+                                    $mediaItems[] = [
+                                        'type' => str_contains($item['mimeType'], 'image') ? 'image' : 'video',
+                                        'url' => str_contains($item['mimeType'], 'image') ? str_replace('=s220', '=w1500', $item['thumbnailLink'] ?? '') : ($item['webContentLink'] ?? ''),
+                                        'thumbnail' => $item['thumbnailLink'] ?? null
                                     ];
                                 }
                             }

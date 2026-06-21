@@ -65,14 +65,13 @@ class RegisterController extends Controller
             'password' => 'required|string|min:6|confirmed',
             'full_name' => 'required|string|max:100',
             'nid' => 'required|string|max:20',
-            'program_studi_id' => 'required|integer',
+            'program_studi_id' => 'required|string',
             'role' => 'required|in:mhs,dosen' // Only allow mhs and dosen for public registration
         ]);
 
         try {
             // Prepare data dan convert types untuk backend
             $data = $request->all();
-            $data['program_studi_id'] = (int) $data['program_studi_id'];
             
             $response = $this->api->register($data);
 

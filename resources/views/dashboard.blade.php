@@ -119,7 +119,7 @@
                                         $imageUrl = null;
                                         if(!empty($post['attachments'])) {
                                             foreach($post['attachments'] as $att) {
-                                                if(str_contains($att['mime'], 'image')) {
+                                                if(str_contains($att['mime'] ?? '', 'image')) {
                                                     $cleanPath = str_replace('\\', '/', $att['file_url'] ?? '');
                                                     $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
                                                     $imageUrl = str_starts_with($cleanPath, 'http') ? $cleanPath : $backendUrl . '/' . ltrim($cleanPath, '/');

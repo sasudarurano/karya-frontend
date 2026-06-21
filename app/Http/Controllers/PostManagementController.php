@@ -63,6 +63,7 @@ class PostManagementController extends Controller
             'contributor_ids' => 'nullable|array',
             'contributor_ids.*' => 'nullable|string',
             'gdrive_url' => 'nullable|url',
+            'post_image' => 'nullable|image|mimes:png,jpeg,jpg|max:2560',
             'post_document' => 'nullable|file|mimes:pdf|max:10240',
             'url_youtube' => 'nullable|url',
             'url_karya' => 'nullable|url',
@@ -104,6 +105,9 @@ class PostManagementController extends Controller
 
             // Collect files only if provided
             $allFiles = [];
+            if ($request->hasFile('post_image') && $request->file('post_image')->isValid()) {
+                $allFiles[] = $request->file('post_image');
+            }
             if ($request->hasFile('post_document') && $request->file('post_document')->isValid()) {
                 $allFiles[] = $request->file('post_document');
             }

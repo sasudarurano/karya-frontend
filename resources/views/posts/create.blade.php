@@ -218,6 +218,26 @@
             <div class="space-y-8">
                 <h3 class="text-lg font-semibold text-gray-800 border-b border-gray-100 pb-2">Lampiran File</h3>
 
+                {{-- Upload Foto --}}
+                <div x-data="imageUploader()">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Upload Foto Karya <span class="text-gray-400 text-xs">(Opsional, Max 1 file, PNG/JPG/JPEG, Maks 2.5MB)</span>
+                    </label>
+                    <div class="flex items-center space-x-4">
+                        <label class="cursor-pointer bg-white border border-gray-300 text-gray-700 px-4 py-2.5 rounded-lg hover:bg-gray-50 font-medium flex items-center space-x-2 shadow-sm transition">
+                            <span>📷 Pilih Foto</span>
+                            <input id="imageInput" type="file" name="post_image" accept=".png,.jpg,.jpeg" class="hidden" @change="handleImage">
+                        </label>
+                        <div x-show="fileName" class="flex items-center space-x-3 bg-blue-50 text-blue-700 px-3 py-2 rounded-lg border border-blue-100" style="display: none;">
+                            <template x-if="previewUrl">
+                                <img :src="previewUrl" class="w-10 h-10 object-cover rounded-md border border-blue-200">
+                            </template>
+                            <span class="text-sm font-medium truncate max-w-xs" x-text="fileName"></span>
+                            <button type="button" @click="removeImage()" class="text-red-500 font-bold text-lg hover:text-red-700">×</button>
+                        </div>
+                    </div>
+                </div>
+
                 {{-- Upload Gdrive URL --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
@@ -309,6 +329,32 @@ document.addEventListener('alpine:init', () => {
         }
     }));
 
+
+    // 2. Logic Image Uploader
+    Alpine.data('imageUploader', () => ({
+        fileName: null,
+        previewUrl: null,
+        handleImage(e) {
+            const file = e.target.files[0];
+            if (file) {
+                if (file.size > 2.5 * 1024 * 1024) {
+                    alert('Error: Ukuran foto maksimal 2.5MB!');
+                    e.target.value = '';
+                    return;
+                }
+                this.fileName = file.name;
+                this.previewUrl = URL.createObjectURL(file);
+            }
+        },
+        removeImage() {
+            this.fileName = null;
+            if (this.previewUrl) {
+                URL.revokeObjectURL(this.previewUrl);
+                this.previewUrl = null;
+            }
+            document.getElementById('imageInput').value = '';
+        }
+    }));
 
     // 3. Logic Document Uploader
     Alpine.data('docUploader', () => ({

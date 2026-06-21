@@ -97,17 +97,7 @@
                             class="appearance-none relative block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent @error('program_studi_id') border-red-500 @enderror">
                         <option value="">-- Pilih Program Studi --</option>
                         @foreach($programStudiList as $prodi)
-                            @php
-                                // Extract ID - bisa berupa integer atau string yang berisi angka
-                                $prodiId = $prodi['id'] ?? '';
-                                // Jika ID berupa string dengan text, extract angkanya
-                                if (is_string($prodiId)) {
-                                    preg_match('/\d+/', $prodiId, $matches);
-                                    $prodiId = $matches[0] ?? $prodiId;
-                                }
-                                $prodiId = (int) $prodiId;
-                            @endphp
-                            <option value="{{ $prodiId }}" {{ old('program_studi_id') == $prodiId ? 'selected' : '' }}>
+                            <option value="{{ $prodi['id'] }}" {{ old('program_studi_id') == $prodi['id'] ? 'selected' : '' }}>
                                 {{ $prodi['name'] ?? $prodi['nama_program_studi'] ?? 'Unknown' }}
                                 @if(isset($prodi['code']) || isset($prodi['kode_program_studi']))
                                     - {{ $prodi['code'] ?? $prodi['kode_program_studi'] ?? '' }}

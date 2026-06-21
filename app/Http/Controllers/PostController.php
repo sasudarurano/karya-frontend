@@ -272,6 +272,7 @@ class PostController extends Controller
             'contributor_ids' => 'nullable|array',
             'contributor_ids.*' => 'nullable|string',
             'gdrive_url' => 'nullable|url',
+            'post_image' => 'nullable|image|mimes:png,jpeg,jpg|max:2560',
             'post_document' => 'nullable|file|mimes:pdf|max:10240',
             'url_youtube' => 'nullable|url',
             'url_karya' => 'nullable|url',
@@ -312,8 +313,11 @@ class PostController extends Controller
             'is_published'    => false, // Default false untuk moderasi admin
         ];
 
-        // 3. Pengolahan File (Multipart - hanya 1 PDF jika ada)
+        // 3. Pengolahan File (Multipart - PDF dan Foto)
         $allFiles = [];
+        if ($request->hasFile('post_image')) {
+            $allFiles[] = $request->file('post_image');
+        }
         if ($request->hasFile('post_document')) {
             $allFiles[] = $request->file('post_document');
         }
@@ -344,6 +348,23 @@ class PostController extends Controller
         ]);
         
         $errorMessage = is_array($errorJson) && isset($errorJson['message']) ? $errorJson['message'] : ($errorBody ?: 'Terjadi kesalahan server saat menyimpan karya.');
+
+        if (is_array($errorJson) && !empty($errorJson['details']) && is_array($errorJson['details'])) {
+            $detailMessages = collect($errorJson['details'])
+                ->map(function ($detail) {
+                    $field = $detail['field'] ?? null;
+                    $message = $detail['message'] ?? null;
+
+                    return $field && $message ? "{$field}: {$message}" : $message;
+                })
+                ->filter()
+                ->implode('; ');
+
+            if ($detailMessages !== '') {
+                $errorMessage .= " ({$detailMessages})";
+            }
+        }
+
         return back()->withInput()->with('error', 'Gagal upload: ' . $errorMessage);
     }
 

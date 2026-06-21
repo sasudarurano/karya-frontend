@@ -3,9 +3,27 @@
 @php
     // --- 1. LOGIKA GAMBAR UTAMA ---
     $imageUrl = null;
-    
-    // Cek media folder GDrive
-    if (!empty($post['gdrive_folder_items']) && count($post['gdrive_folder_items']) > 0) {
+
+    // Prioritas utama: foto yang diupload lewat field "Upload Foto Karya"
+    if (!empty($post['attachments']) && count($post['attachments']) > 0) {
+        foreach ($post['attachments'] as $file) {
+            if (str_contains($file['mime'] ?? '', 'image')) {
+                $rawUrl = $file['file_url'] ?? ('public/uploads/' . ($file['filename'] ?? ''));
+                $cleanPath = str_replace('\\', '/', $rawUrl);
+                
+                if (str_starts_with($cleanPath, 'http')) {
+                    $imageUrl = $cleanPath;
+                } else {
+                    $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
+                    $imageUrl = $backendUrl . '/' . ltrim($cleanPath, '/');
+                }
+                break;
+            }
+        }
+    }
+
+    // Fallback: media folder GDrive
+    if (!$imageUrl && !empty($post['gdrive_folder_items']) && count($post['gdrive_folder_items']) > 0) {
         foreach ($post['gdrive_folder_items'] as $item) {
             if (str_contains($item['mimeType'] ?? '', 'image') && !empty($item['thumbnailLink'])) {
                 $imageUrl = str_replace('=s220', '=w800', $item['thumbnailLink']);
@@ -21,21 +39,6 @@
             $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
         } elseif (preg_match('/id=([a-zA-Z0-9_-]+)/', $gdriveUrl, $matches)) {
             $imageUrl = 'https://drive.google.com/thumbnail?id=' . $matches[1] . '&sz=w800';
-        }
-    }
-    
-    if (!$imageUrl && !empty($post['attachments']) && count($post['attachments']) > 0) {
-        $firstFile = $post['attachments'][0];
-        if (str_contains($firstFile['mime'] ?? '', 'image')) {
-            $rawUrl = $firstFile['file_url'] ?? ('public/uploads/' . ($firstFile['filename'] ?? ''));
-            $cleanPath = str_replace('\\', '/', $rawUrl);
-            
-            if (str_starts_with($cleanPath, 'http')) {
-                $imageUrl = $cleanPath;
-            } else {
-                $backendUrl = rtrim(str_replace('/api', '', env('BACKEND_API_URL')), '/');
-                $imageUrl = $backendUrl . '/' . ltrim($cleanPath, '/');
-            }
         }
     }
 
