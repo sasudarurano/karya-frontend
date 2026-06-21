@@ -30,14 +30,18 @@ class RegisterController extends Controller
         
         if ($prodiResponse->successful()) {
             $responseData = $prodiResponse->json();
-            $programStudiList = $responseData['data'] ?? [];
+            if (isset($responseData['data']['data'])) {
+                $programStudiList = $responseData['data']['data'];
+            } else {
+                $programStudiList = $responseData['data'] ?? [];
+            }
             
             // Debug log structure
             \Log::info('Program Studi Response:', [
                 'response_keys' => array_keys($responseData),
                 'total_items' => count($programStudiList),
-                'first_item_keys' => !empty($programStudiList) ? array_keys($programStudiList[0]) : [],
-                'first_item_sample' => !empty($programStudiList) ? $programStudiList[0] : null,
+                'first_item_keys' => !empty($programStudiList) && isset($programStudiList[0]) ? array_keys($programStudiList[0]) : [],
+                'first_item_sample' => !empty($programStudiList) && isset($programStudiList[0]) ? $programStudiList[0] : null,
             ]);
         } else {
             $programStudiList = [];

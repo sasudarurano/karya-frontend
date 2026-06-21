@@ -108,7 +108,7 @@
                                 <a href="{{ route('profile.edit') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                     ⚙️ Pengaturan
                                 </a>
-                                @if($isAdminLike)
+                                @if($isAdminLike && $role !== 'superadmin')
                                     <div class="border-t border-gray-100 mt-2 pt-2">
                                         <a href="{{ route('admin.posts.index') }}" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50 font-medium">
                                             🛡️ Admin Panel

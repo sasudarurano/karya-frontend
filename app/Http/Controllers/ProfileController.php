@@ -153,6 +153,8 @@ class ProfileController extends Controller
             return redirect()->route('login')->with('error', 'Silakan login terlebih dahulu.');
         }
 
+        $programStudiList = $this->getProgramStudiList();
+
         try {
             // Gunakan method spesifik getMe/getCurrentUserProfile dengan token
             $response = $this->api->getCurrentUserProfile($token);
@@ -167,23 +169,16 @@ class ProfileController extends Controller
                     $profile = array_merge($profile, $profileData['user']);
                 }
                 
-                $prodiResponse = $this->api->getAllProgramStudi();
-                $programStudiList = $prodiResponse->successful() ? ($prodiResponse->json()['data'] ?? []) : [];
-                
                 return view('profile.edit', compact('profile', 'programStudiList'));
             }
 
             // Fallback
             $profile = $user;
-            $prodiResponse = $this->api->getAllProgramStudi();
-            $programStudiList = $prodiResponse->successful() ? ($prodiResponse->json()['data'] ?? []) : [];
             return view('profile.edit', compact('profile', 'programStudiList'));
             
         } catch (\Exception $e) {
             Log::error("Profile edit error: " . $e->getMessage());
             $profile = $user;
-            $prodiResponse = $this->api->getAllProgramStudi();
-            $programStudiList = $prodiResponse->successful() ? ($prodiResponse->json()['data'] ?? []) : [];
             return view('profile.edit', compact('profile', 'programStudiList'));
         }
     }
@@ -280,5 +275,25 @@ class ProfileController extends Controller
             Log::error("Bookmarks error: " . $e->getMessage());
             return back()->with('error', 'Terjadi kesalahan.');
         }
+    }
+
+    /**
+     * Get program studi list helper
+     */
+    private function getProgramStudiList()
+    {
+        try {
+            $response = $this->api->getAllProgramStudi();
+            if ($response->successful()) {
+                $responseData = $response->json();
+                if (isset($responseData['data']['data'])) {
+                    return $responseData['data']['data'];
+                }
+                return $responseData['data'] ?? [];
+            }
+        } catch (\Exception $e) {
+            Log::error("Error fetching program studi list: " . $e->getMessage());
+        }
+        return [];
     }
 }
