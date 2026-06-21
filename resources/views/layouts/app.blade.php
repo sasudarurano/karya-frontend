@@ -20,6 +20,7 @@
         window.globalApiToken = @json(Session::get('api_token', ''));
     </script>
     <script src="{{ asset('js/like-manager.js') }}"></script>
+    <script src="{{ asset('js/realtime-sync.js') }}" defer></script>
 </head>
 <body class="min-h-screen bg-white text-slate-900 antialiased" style="font-family: 'Inter', system-ui, sans-serif;">
     
@@ -276,6 +277,9 @@
                 console.error('Error fetching unread count:', error);
             }
         }
+
+        window.loadNotifications = loadNotifications;
+        window.fetchUnreadCount = fetchUnreadCount;
 
         // Check notifications on page load
         if (document.querySelector('[x-data*="unreadCount"]')) {

@@ -106,11 +106,11 @@
         <div class="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
             <span class="inline-flex items-center gap-1 rounded-md bg-black/65 px-2 py-1 text-xs font-black text-amber-400">
                 <svg class="h-3.5 w-3.5 fill-current" viewBox="0 0 20 20"><path d="M10 1.5l2.47 5.32 5.82.7-4.3 3.98 1.14 5.75L10 14.38l-5.13 2.87 1.14-5.75-4.3-3.98 5.82-.7L10 1.5z"/></svg>
-                {{ $post['likeCount'] ?? 0 }}
+                <span class="like-count-{{ $post['id'] }}">{{ $post['likeCount'] ?? 0 }}</span>
             </span>
             <span class="inline-flex items-center gap-1 rounded-md bg-black/65 px-2 py-1 text-xs font-black text-white">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.25" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                {{ $post['commentCount'] ?? 0 }}
+                <span class="comment-count-{{ $post['id'] }}">{{ $post['commentCount'] ?? 0 }}</span>
             </span>
         </div>
     </a>
@@ -194,7 +194,7 @@
 
             {{-- Stats --}}
             <div class="flex items-center gap-3 shrink-0">
-                <button onclick="toggleLikeCard({{ $post['id'] }}, this)"
+                <button onclick="toggleLikeCard(@json($post['id']), this)"
                         data-post-id="{{ $post['id'] }}"
                         data-liked="{{ $isLiked ? 'true' : 'false' }}"
                         data-post-like-button="{{ $post['id'] }}"
@@ -213,7 +213,7 @@
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                     </svg>
-                    <span>{{ $post['commentCount'] ?? 0 }}</span>
+                    <span class="comment-count-{{ $post['id'] }}">{{ $post['commentCount'] ?? 0 }}</span>
                 </a>
             </div>
         </div>

@@ -144,6 +144,7 @@ const likeManager = {
                 
                 // Update UI
                 this.updateButtonUI(button, postId, likedNow, likeCount);
+                this.dispatchLikeChanged(postId, likedNow, likeCount);
                 
                 console.log(`[LIKE_MANAGER] ${likedNow ? '✅ Liked' : '❌ Unliked'} post ${postId}`);
             } else {
@@ -196,6 +197,22 @@ const likeManager = {
             }
         }
     },
+
+    dispatchLikeChanged(postId, isLiked, likeCount) {
+        const detail = { postId: String(postId), isLiked, likeCount };
+        window.dispatchEvent(new CustomEvent('karya:like-changed', { detail }));
+        window.dispatchEvent(new CustomEvent('karya:sync-now', { detail }));
+
+        try {
+            localStorage.setItem('karya-sync-event', JSON.stringify({
+                ...detail,
+                type: 'like',
+                at: Date.now()
+            }));
+        } catch (e) {
+            console.warn('[LIKE_MANAGER] Failed to broadcast sync event', e);
+        }
+    },
     
     /**
      * Initialize like buttons on page load
@@ -222,6 +239,8 @@ const likeManager = {
         });
     }
 };
+
+window.likeManager = likeManager;
 
 /**
  * Global function for like button clicks

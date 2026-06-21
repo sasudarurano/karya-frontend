@@ -86,12 +86,14 @@ const likeStateManager = {
         }
         
         if (count) {
-            count.textContent = `${likeCount} Menyukai`;
+            count.textContent = likeCount;
         }
         
         console.log('[LIKE] UI Updated - Liked:', isLiked, 'Count:', likeCount);
     }
 };
+
+window.likeStateManager = likeStateManager;
 
 // ============================================================================
 // FOLLOW STATE MANAGER - Handle follow/unfollow persistence
@@ -152,6 +154,8 @@ const followStateManager = {
         console.log('[FOLLOW] UI Updated - Following:', isFollowing);
     }
 };
+
+window.followStateManager = followStateManager;
 
 // ============================================================================
 // LIKE BUTTON HANDLER
@@ -222,6 +226,25 @@ function toggleLike() {
 
             // Update UI
             likeStateManager.updateUI(postId, likedNow, likeCount);
+
+            window.dispatchEvent(new CustomEvent('karya:like-changed', {
+                detail: { postId: String(postId), isLiked: likedNow, likeCount }
+            }));
+            window.dispatchEvent(new CustomEvent('karya:sync-now', {
+                detail: { postId: String(postId), isLiked: likedNow, likeCount }
+            }));
+
+            try {
+                localStorage.setItem('karya-sync-event', JSON.stringify({
+                    type: 'like',
+                    postId: String(postId),
+                    isLiked: likedNow,
+                    likeCount,
+                    at: Date.now()
+                }));
+            } catch (e) {
+                console.warn('[LIKE] Failed to broadcast sync event', e);
+            }
 
             // Show feedback
             if (likedNow) {
