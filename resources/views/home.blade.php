@@ -85,14 +85,14 @@
     $firstHeroPost = $heroSlides->first()['post'] ?? null;
 @endphp
 
-<section class="relative min-h-[640px] overflow-hidden bg-white" data-hero-carousel>
-    <div class="flex min-h-[640px] scroll-smooth transition-transform duration-700 ease-out" data-hero-track>
+<section class="relative min-h-[680px] overflow-hidden bg-white" data-hero-carousel>
+    <div class="flex min-h-[680px] scroll-smooth transition-transform duration-700 ease-out" data-hero-track>
         @foreach($heroSlides as $slide)
             @php
                 $heroPost = $slide['post'];
                 $heroImage = $imageFor($heroPost, 'w1600');
             @endphp
-            <article class="relative min-h-[640px] min-w-full overflow-hidden bg-white">
+            <article class="relative min-h-[680px] min-w-full overflow-hidden bg-white">
                 @if($heroImage)
                     <img src="{{ $heroImage }}" alt="{{ $heroPost['title'] ?? 'Karya Mahasiswa' }}" class="absolute inset-0 h-full w-full object-cover object-center">
                     <div class="absolute inset-0 bg-gradient-to-r from-white via-white/92 to-white/20"></div>
@@ -168,7 +168,7 @@
     </div>
 
     @if($heroSlides->count() > 1)
-        <div class="absolute bottom-7 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-slate-200 bg-white/90 p-1 shadow-lg backdrop-blur">
+        <div class="absolute bottom-9 left-1/2 z-20 flex -translate-x-1/2 items-center gap-2 rounded-full border border-slate-200 bg-white/90 p-1 shadow-lg backdrop-blur">
             @foreach($heroSlides as $slide)
                 <button type="button" data-hero-jump="{{ $loop->index }}" data-hero-url="{{ !empty($slide['post']) ? route('posts.show', $slide['post']['id']) : '' }}" class="rounded-full px-4 py-2 text-xs font-black text-slate-500 transition hover:text-red-600 {{ $loop->first ? 'bg-slate-950 text-white hover:text-white' : '' }}">
                     {{ $slide['label'] }}
