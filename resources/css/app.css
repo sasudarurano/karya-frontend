@@ -9,3 +9,20 @@
     --color-brand-500: #3b82f6;
     --color-brand-600: #2563eb;
 }
+
+/* Fix browser autofill styling */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus, 
+input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #0f172a !important; /* matches text-slate-900 */
+    transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Hide MS reveal/clear buttons to prevent overlap with custom eye icon */
+input::-ms-reveal,
+input::-ms-clear {
+    display: none;
+}
+
