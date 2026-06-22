@@ -35,16 +35,16 @@
     $endDateFormatted = !empty($post['end_date']) ? \Carbon\Carbon::parse($post['end_date'])->translatedFormat('d M Y') : null;
 @endphp
 
-<div class="min-h-screen bg-[#F8FAFC] pb-24 font-sans selection:bg-blue-100 selection:text-blue-900">
+<div class="min-h-screen bg-[#F8FAFC] pb-24 font-sans selection:bg-red-100 selection:text-red-900">
     
     {{-- Decorative Background --}}
-    <div class="fixed top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-blue-50/80 to-transparent -z-10 pointer-events-none"></div>
+    <div class="fixed top-0 left-0 right-0 h-[500px] bg-gradient-to-b from-red-50/80 to-transparent -z-10 pointer-events-none"></div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10">
         
         {{-- Breadcrumb Modern --}}
         <nav class="flex items-center text-sm font-medium text-slate-500 mb-6 sm:mb-10 overflow-x-auto whitespace-nowrap scrollbar-hide py-2">
-            <a href="{{ route('home') }}" class="hover:text-blue-600 transition-colors flex items-center gap-1.5">
+            <a href="{{ route('home') }}" class="hover:text-red-600 transition-colors flex items-center gap-1.5">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                 Beranda
             </a>
@@ -60,7 +60,7 @@
                 {{-- 1. Header Section --}}
                 <header class="space-y-6">
                     <div class="flex flex-wrap items-center gap-3">
-                        <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-blue-600 text-white uppercase tracking-wider shadow-sm shadow-blue-200">
+                        <span class="px-3 py-1 rounded-full text-[11px] font-bold bg-red-600 text-white uppercase tracking-wider shadow-sm shadow-red-200">
                             {{ $post['category'] }}
                         </span>
                         <span class="text-slate-300">|</span>
@@ -77,7 +77,7 @@
                     {{-- Timeline --}}
                     @if($startDateFormatted || $endDateFormatted)
                         <div class="inline-flex items-center gap-3 px-4 py-2 bg-white rounded-xl border border-slate-200 text-sm text-slate-600 shadow-sm">
-                            <div class="p-1.5 bg-blue-50 text-blue-600 rounded-lg">
+                            <div class="p-1.5 bg-red-50 text-red-600 rounded-lg">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
                             </div>
                             <span class="font-medium">
@@ -109,11 +109,11 @@
                 {{-- 2. Media Showcase --}}
                 <div class="space-y-4 mb-4">
                     <h3 class="text-xl font-bold text-slate-900 flex items-center gap-3">
-                        <span class="w-1.5 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></span>
+                        <span class="w-1.5 h-6 bg-gradient-to-b from-red-600 to-rose-600 rounded-full"></span>
                         Screenshoot / Media Karya
                     </h3>
-                    <p class="text-xs text-slate-500 bg-blue-50/50 border border-blue-100 p-3 rounded-xl flex items-center gap-2">
-                        <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <p class="text-xs text-slate-500 bg-red-50/50 border border-red-100 p-3 rounded-xl flex items-center gap-2">
+                        <svg class="w-4 h-4 text-red-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                         Pastikan akses link Google Drive diubah ke "Anyone with the link" agar media dapat tampil di sini.
@@ -214,11 +214,11 @@
                         @elseif($fileId)
                             <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 bg-slate-900 aspect-video group select-none flex items-center justify-center">
                                 <div class="absolute inset-0 bg-cover bg-center opacity-30 blur-[50px] scale-125 transform translate-y-10" style="background-image: url('https://drive.google.com/thumbnail?id={{ $fileId }}&sz=w1000');"></div>
-                                <img src="https://drive.google.com/thumbnail?id={{ $fileId }}&sz=w1000" class="max-w-full max-h-full object-contain rounded-lg shadow-lg relative z-10" alt="{{ $post['title'] }}" onerror="this.onerror=null; this.parentElement.innerHTML='<a href=\'{{ $gdriveUrl }}\' target=\'_blank\' class=\'flex flex-col items-center gap-3 text-white hover:text-blue-300 transition z-20\'><svg class=\'w-16 h-16\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14\'></path></svg><span class=\'text-xl font-bold\'>Buka File Eksternal</span></a><p class=\'absolute bottom-4 text-xs text-slate-400 z-20\'>Thumbnail tidak bisa dimuat secara langsung, silakan buka link.</p>';">
+                                <img src="https://drive.google.com/thumbnail?id={{ $fileId }}&sz=w1000" class="max-w-full max-h-full object-contain rounded-lg shadow-lg relative z-10" alt="{{ $post['title'] }}" onerror="this.onerror=null; this.parentElement.innerHTML='<a href=\'{{ $gdriveUrl }}\' target=\'_blank\' class=\'flex flex-col items-center gap-3 text-white hover:text-red-300 transition z-20\'><svg class=\'w-16 h-16\' fill=\'none\' stroke=\'currentColor\' viewBox=\'0 0 24 24\'><path stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14\'></path></svg><span class=\'text-xl font-bold\'>Buka File Eksternal</span></a><p class=\'absolute bottom-4 text-xs text-slate-400 z-20\'>Thumbnail tidak bisa dimuat secara langsung, silakan buka link.</p>';">
                             </div>
                         @else
-                            <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 bg-blue-50 aspect-video group select-none flex items-center justify-center border border-blue-200">
-                                <a href="{{ $gdriveUrl }}" target="_blank" class="flex flex-col items-center gap-3 text-blue-600 hover:text-blue-800 transition">
+                            <div class="relative w-full rounded-3xl overflow-hidden shadow-2xl shadow-slate-200 bg-red-50 aspect-video group select-none flex items-center justify-center border border-red-200">
+                                <a href="{{ $gdriveUrl }}" target="_blank" class="flex flex-col items-center gap-3 text-red-600 hover:text-red-800 transition">
                                     <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
                                     <span class="text-xl font-bold">Buka Link Dokumen/Google Drive Karya</span>
                                 </a>
@@ -231,10 +231,10 @@
                 {{-- 5. Content / Description --}}
                 <div class="bg-white rounded-3xl p-6 sm:p-10 shadow-sm border border-slate-100">
                     <h3 class="text-xl font-bold text-slate-900 mb-6 flex items-center gap-3">
-                        <span class="w-1.5 h-6 bg-gradient-to-b from-blue-600 to-indigo-600 rounded-full"></span>
+                        <span class="w-1.5 h-6 bg-gradient-to-b from-red-600 to-rose-600 rounded-full"></span>
                         Deskripsi Karya
                     </h3>
-                    <div class="prose prose-lg prose-slate prose-blue max-w-none text-slate-600 leading-relaxed prose-img:rounded-xl">
+                    <div class="prose prose-lg prose-slate prose-red max-w-none text-slate-600 leading-relaxed prose-img:rounded-xl">
                         <div class="whitespace-pre-line">{!! $post['caption'] ?? 'Penulis belum menambahkan deskripsi detail untuk karya ini.' !!}</div>
                     </div>
                 </div>
@@ -279,7 +279,7 @@
 
                             {{-- Comment Scroll --}}
                             <a href="#comments" class="group flex items-center gap-3 transition-all">
-                                <div class="relative p-2.5 rounded-full bg-white border border-slate-200 text-slate-400 group-hover:border-blue-200 group-hover:text-blue-500 transition-all duration-300">
+                                <div class="relative p-2.5 rounded-full bg-white border border-slate-200 text-slate-400 group-hover:border-red-200 group-hover:text-red-500 transition-all duration-300">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"></path></svg>
                                 </div>
                                 <div class="flex flex-col items-start">
@@ -367,7 +367,7 @@
                     {{-- A. AUTHOR CARD --}}
                     <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 overflow-hidden">
                         {{-- Card Banner --}}
-                        <div class="h-24 bg-gradient-to-r from-blue-600 to-indigo-600 relative">
+                        <div class="h-24 bg-gradient-to-r from-red-600 to-rose-600 relative">
                             <div class="absolute inset-0 opacity-20" style="background-image: radial-gradient(#fff 1px, transparent 1px); background-size: 16px 16px;"></div>
                         </div>
 
@@ -377,7 +377,7 @@
                                 <div class="p-1.5 bg-white rounded-2xl shadow-sm">
                                     <a href="{{ route('profile.show', $author['id']) }}">
                                         @if($authorImg)
-                                            <img src="{{ $authorImg }}" class="w-24 h-24 rounded-xl object-cover" alt="{{ $author['full_name'] }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($author['full_name']) }}&background=0D8ABC&color=fff';">
+                                            <img src="{{ $authorImg }}" class="w-24 h-24 rounded-xl object-cover" alt="{{ $author['full_name'] }}" onerror="this.onerror=null; this.src='https://ui-avatars.com/api/?name={{ urlencode($author['full_name']) }}&background=DC2626&color=fff';">
                                         @else
                                             <div class="w-24 h-24 bg-slate-100 text-slate-500 rounded-xl flex items-center justify-center text-3xl font-bold">
                                                 {{ strtoupper(substr($author['full_name'] ?? 'U', 0, 1)) }}
@@ -389,7 +389,7 @@
 
                             {{-- Name & Details --}}
                             <a href="{{ route('profile.show', $author['id']) }}" class="block group">
-                                <h2 class="text-xl font-black text-slate-900 group-hover:text-blue-600 transition">{{ $author['full_name'] }}</h2>
+                                <h2 class="text-xl font-black text-slate-900 group-hover:text-red-600 transition">{{ $author['full_name'] }}</h2>
                                 <p class="text-slate-500 font-medium text-sm">{{ '@' . ($author['username'] ?? '-') }}</p>
                             </a>
                             
@@ -419,7 +419,7 @@
                                     class="w-full mt-2 py-2.5 rounded-xl font-bold text-sm transition-all duration-300 flex items-center justify-center gap-2 shadow-sm
                                     {{ $isFollowing 
                                         ? 'bg-slate-100 text-slate-600 hover:bg-rose-50 hover:text-rose-600 hover:border-rose-100 border border-transparent' 
-                                        : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-200' }}">
+                                        : 'bg-red-600 text-white hover:bg-red-700 hover:shadow-lg hover:shadow-red-200' }}">
                                 <span class="follow-text">{{ $isFollowing ? 'Mengikuti' : 'Ikuti Penulis' }}</span>
                             </button>
                         </div>
