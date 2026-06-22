@@ -527,9 +527,15 @@ class KaryaApi
      */
     public function updateUser($userId, $updateData, $token = null)
     {
+        $loggedData = $updateData;
+        foreach (['password', 'password_confirmation', 'old_password', 'new_password', 'confirm_password', 'token', 'api_token'] as $key) {
+            if (isset($loggedData[$key])) {
+                $loggedData[$key] = '********';
+            }
+        }
         Log::info('KaryaApi:updateUser', [
             'userId' => $userId,
-            'updateData' => $updateData,
+            'updateData' => $loggedData,
             'token_exists' => !empty($token),
             'url' => "{$this->baseUrl}/v1/users/{$userId}",
         ]);
