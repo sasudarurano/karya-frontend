@@ -144,25 +144,25 @@ class PostController extends Controller
         if ($response->successful()) {
             $post = $response->json()['data'];
             
-            // DEBUG: Log all available fields in post to see HKI document field
-            Log::info('Post fields available:', [
-                'post_id' => $id,
-                'all_keys' => array_keys($post),
-                'hki_document' => $post['hki_document'] ?? 'NOT_FOUND',
-                'post_document' => $post['post_document'] ?? 'NOT_FOUND',
-                'document' => $post['document'] ?? 'NOT_FOUND',
-                'pdf' => $post['pdf'] ?? 'NOT_FOUND',
-            ]);
+
+
+
+
+
+
+
+
+
             
-            // DEBUG: Log the isLiked and is_followed status from backend
-            Log::info('Post data received from backend', [
-                'post_id' => $id,
-                'isLiked' => $post['isLiked'] ?? 'NOT_SET',
-                'author_is_followed' => $post['author']['is_followed'] ?? 'NOT_SET',
-                'likeCount' => $post['likeCount'] ?? 0,
-                'has_isLiked_field' => isset($post['isLiked']),
-                'has_is_followed_field' => isset($post['author']['is_followed'])
-            ]);
+
+
+
+
+
+
+
+
+
             
             // Get comments for this post
             // Kirim token juga untuk validasi kepemilikan komentar (tombol delete/edit)

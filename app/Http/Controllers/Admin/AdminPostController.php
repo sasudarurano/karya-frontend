@@ -152,15 +152,15 @@ class AdminPostController extends Controller
                 return back()->with('error', 'Karya tidak ditemukan.');
             }
 
-            // DEBUG: Log all available fields
-            Log::info('Admin Post fields available:', [
-                'post_id' => $id,
-                'all_keys' => array_keys($post),
-                'hki_document' => $post['hki_document'] ?? 'NOT_FOUND',
-                'post_document' => $post['post_document'] ?? 'NOT_FOUND',
-                'document' => $post['document'] ?? 'NOT_FOUND',
-                'pdf' => $post['pdf'] ?? 'NOT_FOUND',
-            ]);
+
+
+
+
+
+
+
+
+
 
             return view('admin.posts.show', compact('post'));
         } else {

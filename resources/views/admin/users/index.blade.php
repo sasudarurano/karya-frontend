@@ -96,59 +96,12 @@
                 <svg class="w-5 h-5 mr-3 text-rose-500" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path></svg>
                 <span class="font-bold">Error: {{ $error_message }}</span>
             </div>
-
-            @if(isset($debug_info) && $debug_info)
-                <div class="mb-6 bg-slate-900 text-slate-100 rounded-lg p-6 font-mono text-xs overflow-auto border border-slate-700 shadow-lg">
-                    <div class="mb-4 text-blue-300 font-bold text-sm">🔍 DEBUG INFORMATION:</div>
-                    
-                    <div class="mb-3 border-b border-slate-700 pb-3">
-                        <div class="text-yellow-300">📌 API Response Status:</div>
-                        <div class="text-slate-300">{{ $debug_info['status'] ?? 'N/A' }}</div>
-                    </div>
-
-                    <div class="mb-3 border-b border-slate-700 pb-3">
-                        <div class="text-yellow-300">📌 API URL:</div>
-                        <div class="text-slate-300 break-all">{{ $debug_info['api_url'] ?? 'N/A' }}/v1/users</div>
-                    </div>
-
-                    <div class="mb-3 border-b border-slate-700 pb-3">
-                        <div class="text-yellow-300">📌 Token Status:</div>
-                        <div class="text-slate-300">
-                            @if($debug_info['token_exists'])
-                                <span class="text-green-300">✅ Token exists ({{ $debug_info['token_length'] ?? 0 }} chars)</span>
-                            @else
-                                <span class="text-red-300">❌ No token found in session!</span>
-                            @endif
-                        </div>
-                    </div>
-
-                    <div class="mb-3 border-b border-slate-700 pb-3">
-                        <div class="text-yellow-300">📌 Response Body:</div>
-                        <div class="text-slate-300 mt-2 bg-slate-800 p-2 rounded">
-                            <pre class="whitespace-pre-wrap break-words">{{ $debug_info['body'] ?? 'No response body' }}</pre>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 text-slate-400 text-xs">
-                        <details>
-                            <summary class="cursor-pointer hover:text-slate-300">💡 Troubleshooting Tips</summary>
-                            <div class="mt-2 space-y-1">
-                                <p>1. Ensure backend is running: <code>npm start</code> in backend folder</p>
-                                <p>2. Verify token exists: Check Session Storage in DevTools</p>
-                                <p>3. Check backend logs for errors</p>
-                                <p>4. Verify API_BASE_URL in .env matches your backend</p>
-                                <p>5. Ensure you're logged in as superadmin or kemahasiswaan role</p>
-                            </div>
-                        </details>
-                    </div>
-                </div>
-            @endif
         @endif
 
         @if(empty($users))
             <div class="bg-white rounded-[2rem] shadow-sm border border-slate-200 p-16 text-center">
                 <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                    <svg class="w-12 h-12 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
                 </div>
                 <h3 class="text-xl font-bold text-slate-800">
                     @if($search)
@@ -266,7 +219,7 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 105.636 5.636m12.728 12.728L5.636 5.636"></path>
                                                     </svg>
                                                     Nonaktifkan
-                                                </button>
+                                                 </button>
                                             </form>
                                         @endif
 
@@ -342,24 +295,6 @@
 </div>
 
 <script>
-    // Debug: Log semua form submission untuk role change
-    document.addEventListener('DOMContentLoaded', function() {
-        const forms = document.querySelectorAll('form[action*="admin.users.update"]');
-        console.log(`Found ${forms.length} role change forms`);
-        
-        forms.forEach((form, index) => {
-            form.addEventListener('submit', function(e) {
-                console.log(`Form ${index} submitted`, {
-                    action: form.action,
-                    method: form.method,
-                    role: form.querySelector('input[name="role"]')?.value,
-                    full_name: form.querySelector('input[name="full_name"]')?.value,
-                    email: form.querySelector('input[name="email"]')?.value
-                });
-            });
-        });
-    });
-
     // Reset Password Function
     async function resetUserPassword(userId, userName) {
         if (!confirm(`Reset password untuk user "${userName}"?\n\nPassword akan di-reset ke default dan harus diberitahukan kepada user.`)) {

@@ -37,12 +37,6 @@ class RegisterController extends Controller
             }
             
             // Debug log structure
-            \Log::info('Program Studi Response:', [
-                'response_keys' => array_keys($responseData),
-                'total_items' => count($programStudiList),
-                'first_item_keys' => !empty($programStudiList) && isset($programStudiList[0]) ? array_keys($programStudiList[0]) : [],
-                'first_item_sample' => !empty($programStudiList) && isset($programStudiList[0]) ? $programStudiList[0] : null,
-            ]);
         } else {
             $programStudiList = [];
             \Log::error('Failed to fetch program studi', [
@@ -87,12 +81,6 @@ class RegisterController extends Controller
                 $message = $body['message'] ?? 'Validasi gagal.';
                 
                 // Log untuk debugging
-                \Log::info('Registration validation error:', [
-                    'status' => $response->status(),
-                    'message' => $message,
-                    'errors' => $errors,
-                    'full_response' => $body
-                ]);
                 
                 return back()
                     ->withInput($request->except('password', 'password_confirmation'))

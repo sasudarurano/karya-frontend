@@ -15,32 +15,7 @@ use App\Http\Controllers\Admin\ProgramStudiController;
 use App\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
-/*
-|--------------------------------------------------------------------------
-| Debug Routes (Temporary - Remove in Production)
-|--------------------------------------------------------------------------
-*/
-if (config('app.debug')) {
-    Route::get('/debug/test-post/{id}', function($id) {
-        $api = app(\App\Services\KaryaApi::class);
-        $response = $api->getPostById($id);
-        return [
-            'status' => $response->status(),
-            'successful' => $response->successful(),
-            'data' => $response->json(),
-        ];
-    })->name('debug.test-post');
-    
-    Route::get('/debug/my-posts', function() {
-        $api = app(\App\Services\KaryaApi::class);
-        $response = $api->getMyPosts();
-        return [
-            'status' => $response->status(),
-            'successful' => $response->successful(),
-            'data' => $response->json(),
-        ];
-    })->name('debug.my-posts');
-}
+
 
 /*
 |--------------------------------------------------------------------------

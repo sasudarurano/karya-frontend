@@ -41,7 +41,7 @@ class AdminUserController extends Controller
         $users = [];
         $meta = [];
         $error_message = null;
-        $debug_info = null;
+
 
         if ($response->successful()) {
             $responseData = $response->json();
@@ -64,14 +64,14 @@ class AdminUserController extends Controller
                 'body' => $response->body(),
             ]);
             
-            // DEBUG: Simpan info untuk ditampilkan di view
-            $debug_info = [
-                'status' => $response->status(),
-                'body' => $response->body(),
-                'token_exists' => !empty($token),
-                'token_length' => strlen($token ?? ''),
-                'api_url' => env('API_BASE_URL', 'http://localhost:3000/api'),
-            ];
+
+
+
+
+
+
+
+
             
             if ($response->status() === 401) {
                 return redirect()->route('login')->with('error', 'Sesi kadaluarsa, silakan login kembali.');
@@ -80,7 +80,7 @@ class AdminUserController extends Controller
             $error_message = 'Gagal mengambil data user. Status: ' . $response->status();
         }
 
-        return view('admin.users.index', compact('users', 'meta', 'search', 'error_message', 'debug_info'));
+        return view('admin.users.index', compact('users', 'meta', 'search', 'error_message'));
     }
 
     /**
