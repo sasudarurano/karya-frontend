@@ -527,7 +527,7 @@ class KaryaApi
      */
     public function updateUser($userId, $updateData, $token = null)
     {
-        \Illuminate\Support\Facades\Log::info('KaryaApi:updateUser', [
+        Log::info('KaryaApi:updateUser', [
             'userId' => $userId,
             'updateData' => $updateData,
             'token_exists' => !empty($token),
@@ -536,7 +536,7 @@ class KaryaApi
         
         $response = $this->getClientWithToken($token)->put("{$this->baseUrl}/v1/users/{$userId}", $updateData);
         
-        \Illuminate\Support\Facades\Log::info('KaryaApi:updateUser:response', [
+        Log::info('KaryaApi:updateUser:response', [
             'userId' => $userId,
             'status' => $response->status(),
             'successful' => $response->successful(),
@@ -562,7 +562,7 @@ class KaryaApi
      */
     public function changePassword($data, $token = null)
     {
-        \Illuminate\Support\Facades\Log::info('KaryaApi:changePassword', [
+        Log::info('KaryaApi:changePassword', [
             'endpoint' => "{$this->baseUrl}/v1/users/change-password",
             'has_token' => !empty($token),
             'token_length' => $token ? strlen($token) : 0,
@@ -571,7 +571,7 @@ class KaryaApi
         
         $response = $this->getClientWithToken($token)->post("{$this->baseUrl}/v1/users/change-password", $data);
         
-        \Illuminate\Support\Facades\Log::info('KaryaApi:changePassword:response', [
+        Log::info('KaryaApi:changePassword:response', [
             'status' => $response->status(),
             'successful' => $response->successful(),
             'body' => $response->json()
